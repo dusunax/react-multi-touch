@@ -3,11 +3,8 @@ import { createContext, useContext } from "react";
 import { COLOR, POSITION } from "./constant";
 import useTouchable from "./useTouchable";
 
-interface TouchableContext {
-  cornerImageSrc: string;
-  cornerStyle: string;
-  hasCorner: boolean;
-  isTouchable: boolean;
+type ContextValue = ReturnType<typeof useTouchable>["contextValue"];
+interface TouchableContext extends ContextValue {
   isTouching: boolean;
 }
 
@@ -23,7 +20,12 @@ interface TouchableProps {
 
 const TouchableContext = createContext<TouchableContext | undefined>(undefined);
 
-const Touchable = ({ id, children, className, ...props }: TouchableProps) => {
+const Touchable = ({
+  id,
+  children,
+  className = "",
+  ...props
+}: TouchableProps) => {
   const { size, touchableRef, events, contextValue, isTouching } = useTouchable(
     {
       id,
@@ -34,16 +36,16 @@ const Touchable = ({ id, children, className, ...props }: TouchableProps) => {
   return (
     <TouchableContext.Provider value={{ ...contextValue, isTouching }}>
       <div
-        className={`absolute dragable ${className} ${
+        className={`absolute touchable__container ${className} ${
           !size.width || !size.height ? "invisible" : ""
-        } ${isTouching ? "z-100" : ""}`}
+        } ${isTouching ? "touching z-100" : ""}`}
         id={id}
         ref={touchableRef}
         {...events}
       >
         {children}
       </div>
-      <div style={{ ...size }} />
+      <div style={{ ...size }} className="touchable__relative-size" />
     </TouchableContext.Provider>
   );
 };

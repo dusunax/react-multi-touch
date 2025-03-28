@@ -40,7 +40,9 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
    */
   const drag = (event: TouchEvent) => {
     const el = event.target as HTMLElement;
-    const dragable = el.closest(".dragable") as DraggableElement | null;
+    const dragable = el.closest(
+      ".touchable__container"
+    ) as DraggableElement | null;
     if (
       !eventCacheRef.current ||
       event.target === null ||
@@ -73,7 +75,7 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
    */
   const onTouchStart: EventHandler = (event: TouchEvent) => {
     const el = event.target as HTMLElement;
-    const dragable = el.closest(".dragable");
+    const dragable = el.closest(".touchable__container");
 
     if (!dragable || dragable.id !== id) {
       setIsTouching(false);
@@ -106,15 +108,18 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
 
   // Update isTouching on Global Touch Start
   useEffect(() => {
-    const handleGlobalTouch= (event: TouchEvent) => {
+    const handleGlobalTouch = (event: TouchEvent) => {
       const el = event.target as HTMLElement;
-      const dragable = el.closest(".dragable");
+      const dragable = el.closest(".touchable__container");
       if (!dragable || dragable.id !== id) {
         setIsTouching(false);
       }
-    } 
+    };
 
-    document.addEventListener("touchstart", handleGlobalTouch as unknown as EventListener);
+    document.addEventListener(
+      "touchstart",
+      handleGlobalTouch as unknown as EventListener
+    );
     return () => {
       document.removeEventListener(
         "touchstart",
