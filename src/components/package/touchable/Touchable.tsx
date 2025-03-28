@@ -4,16 +4,17 @@ import { COLOR, POSITION } from "./constant";
 import useTouchable from "./useTouchable";
 
 interface TouchableContext {
-  isSelected: boolean;
-  isTouchable: boolean;
-  hasCorner: boolean;
   cornerImageSrc: string;
   cornerStyle: string;
+  hasCorner: boolean;
+  isTouchable: boolean;
+  isTouching: boolean;
 }
 
 interface TouchableProps {
+  id: string;
   children: React.ReactNode;
-  isSelected?: TouchableContext["isSelected"];
+  className?: string;
   isTouchable?: TouchableContext["isTouchable"];
   hasCorner?: TouchableContext["hasCorner"];
   cornerImageSrc?: TouchableContext["cornerImageSrc"];
@@ -22,29 +23,36 @@ interface TouchableProps {
 
 const TouchableContext = createContext<TouchableContext | undefined>(undefined);
 
-const Touchable = ({ children, ...props }: TouchableProps) => {
-  const { size, contextValue, touchableRef } = useTouchable(props);
+const Touchable = ({ id, children, className, ...props }: TouchableProps) => {
+  const { size, touchableRef, events, contextValue, isTouching } = useTouchable(
+    {
+      id,
+      ...props,
+    }
+  );
 
   return (
-    <TouchableContext.Provider value={contextValue}>
+    <TouchableContext.Provider value={{ ...contextValue, isTouching }}>
       <div
-        className={`absolute bg-red-500 ${
+        className={`absolute dragable ${className} ${
           !size.width || !size.height ? "invisible" : ""
-        }`}
+        } ${isTouching ? "z-100" : ""}`}
+        id={id}
         ref={touchableRef}
+        {...events}
       >
         {children}
       </div>
-      <div style={{ width: size.width, height: size.height }} />
+      <div style={{ ...size }} />
     </TouchableContext.Provider>
   );
 };
 
-const Handle = ({ className }: { className?: string }) => {
+const Handle = ({ className = "" }: { className?: string }) => {
   const ctx = useContext(TouchableContext);
   if (!ctx) return null;
-  const { hasCorner, isSelected } = ctx;
-  if (!hasCorner || !isSelected) return null;
+  const { hasCorner, isTouching } = ctx;
+  if (!hasCorner || !isTouching) return null;
 
   return (
     <div
