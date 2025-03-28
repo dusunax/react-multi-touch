@@ -12,10 +12,12 @@ interface TouchableProps {
   id: string;
   children: React.ReactNode;
   className?: string;
-  isTouchable?: TouchableContext["isTouchable"];
-  hasCorner?: TouchableContext["hasCorner"];
   cornerImageSrc?: TouchableContext["cornerImageSrc"];
   cornerStyle?: TouchableContext["cornerStyle"];
+  isTouchable?: TouchableContext["isTouchable"];
+  minTrashhold?: number;
+  maxTrashhold?: number;
+  showCorner?: TouchableContext["showCorner"];
 }
 
 const TouchableContext = createContext<TouchableContext | undefined>(undefined);
@@ -50,15 +52,16 @@ const Touchable = ({
   );
 };
 
-const Handle = ({ className = "" }: { className?: string }) => {
+const Handles = ({ className = "" }: { className?: string }) => {
   const ctx = useContext(TouchableContext);
   if (!ctx) return null;
-  const { hasCorner, isTouching } = ctx;
-  if (!hasCorner || !isTouching) return null;
+  const { showCorner, isTouching } = ctx;
 
   return (
     <div
-      className={`absolute w-full h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 box-content ${className}`}
+      className={`absolute w-full h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 box-content ${
+        !showCorner || !isTouching ? "invisible" : ""
+      } ${className} `}
     >
       {Object.keys(POSITION).map((position) => (
         <CornerHandle
@@ -81,7 +84,10 @@ const CornerHandle = ({ position }: { position: keyof typeof POSITION }) => {
   const { cornerImageSrc, cornerStyle } = ctx;
 
   return (
-    <div className={`absolute ${POSITION[position]} ${cornerStyle}`}>
+    <div
+      className={`absolute ${POSITION[position]}  ${cornerStyle} p-4 z-10`}
+      data-position={position}
+    >
       {cornerImageSrc ? (
         <Image
           src={cornerImageSrc}
@@ -91,18 +97,18 @@ const CornerHandle = ({ position }: { position: keyof typeof POSITION }) => {
           style={{
             objectFit: "contain",
           }}
-          className={cornerStyle}
+          className={`pointer-events-none ${cornerStyle}`}
         />
       ) : (
         <div
-          className={`bg-white border rounded-xs border-${COLOR} w-2 h-2`}
-        ></div>
+          className={`bg-white border rounded-xs border-${COLOR} w-2 h-2 pointer-events-none`}
+        />
       )}
     </div>
   );
 };
 
 Touchable.displayName = "Touchable";
-Touchable.Handle = Handle;
+Touchable.Handles = Handles;
 
 export default Touchable;
