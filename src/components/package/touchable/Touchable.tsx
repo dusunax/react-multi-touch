@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { createContext, useContext } from "react";
-import { COLOR, POSITION } from "./constant";
+import { COLOR, DEFAULT_HANDLE_MODE, POSITION, HANDLE_MODE } from "./constant";
 import useTouchable from "./useTouchable";
 
 type ContextValue = ReturnType<typeof useTouchable>["contextValue"];
@@ -14,10 +14,9 @@ interface TouchableProps {
   className?: string;
   cornerImageSrc?: TouchableContext["cornerImageSrc"];
   cornerStyle?: TouchableContext["cornerStyle"];
-  isTouchable?: TouchableContext["isTouchable"];
   minTrashhold?: number;
   maxTrashhold?: number;
-  showCorner?: TouchableContext["showCorner"];
+  handleMode?: (typeof HANDLE_MODE)[number];
 }
 
 const TouchableContext = createContext<TouchableContext | undefined>(undefined);
@@ -31,6 +30,7 @@ const Touchable = ({
   const { size, touchableRef, events, contextValue, isTouching } = useTouchable(
     {
       id,
+      handleMode: props.handleMode || DEFAULT_HANDLE_MODE,
       ...props,
     }
   );
@@ -40,7 +40,8 @@ const Touchable = ({
       <div
         className={`absolute touchable__container ${className} ${
           !size.width || !size.height ? "invisible" : ""
-        } ${isTouching ? "touching z-100" : ""}`}
+        } ${isTouching ? "touching" : ""}
+        ${isTouching && props.handleMode === "touching" ? "z-100" : ""}`}
         id={id}
         ref={touchableRef}
         {...events}
@@ -55,12 +56,12 @@ const Touchable = ({
 const Handles = ({ className = "" }: { className?: string }) => {
   const ctx = useContext(TouchableContext);
   if (!ctx) return null;
-  const { showCorner, isTouching } = ctx;
+  const { isTouching } = ctx;
 
   return (
     <div
       className={`absolute w-full h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 box-content ${
-        !showCorner || !isTouching ? "invisible" : ""
+        !isTouching ? "invisible" : ""
       } ${className} `}
     >
       {Object.keys(POSITION).map((position) => (

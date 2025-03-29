@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { POSITION } from "./constant";
+import { POSITION, HANDLE_MODE } from "./constant";
 
 interface UseTouchableProps {
   id: string;
@@ -16,14 +16,12 @@ interface UseTouchableProps {
   minTrashhold?: number;
   maxTrashhold?: number;
   showCorner?: boolean;
+  handleMode?: (typeof HANDLE_MODE)[number];
 }
 
 type EventHandler = TouchEventHandler<HTMLDivElement>;
 type ContextValue = Required<
-  Pick<
-    UseTouchableProps,
-    "cornerImageSrc" | "cornerStyle" | "showCorner" | "isTouchable"
-  >
+  Pick<UseTouchableProps, "cornerImageSrc" | "cornerStyle" | "showCorner">
 >;
 type PinchZoomSide = keyof typeof POSITION | "center";
 
@@ -31,7 +29,6 @@ const defaultValues: ContextValue = {
   cornerImageSrc: "",
   cornerStyle: "",
   showCorner: true,
-  isTouchable: false,
 };
 
 const useTouchable = ({ id, ...props }: UseTouchableProps) => {
@@ -40,9 +37,14 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
   const touchCountRef = useRef<number>(0);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [domRect, setDomRect] = useState<DOMRect | null>(null);
-  const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
+  const [initialSize, setInitialSize] = useState<Pick<
+    DOMRect,
+    "width" | "height"
+  > | null>(null);
 
-  const [isTouching, setIsTouching] = useState(false);
+  const [isTouching, setIsTouching] = useState(
+    props.handleMode === "always" ? true : false
+  );
   const { minTrashhold = 20, maxTrashhold = Infinity, ...contextProps } = props;
   const contextValue = {
     ...defaultValues,
@@ -198,7 +200,7 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
         Math.pow(cachedTouches[0].clientY - cachedTouches[1].clientY, 2)
     );
     const diff = distance - prevDistance;
-    let scale = 1 + diff / 100;
+    const scale = 1 + diff / 100;
 
     const { width, height, left, top } = getStyle(touchable);
     const widthScale = Math.floor(width * scale);
@@ -224,6 +226,9 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
   const onTouchStart = (event: TouchEvent) => {
     const touchable = touchableRef.current;
     if (!touchable) return;
+    if (props.handleMode === "hide" || props.handleMode === "always") {
+      return;
+    }
 
     updateIsTouching(touchable);
     updateTouchCount();
@@ -337,27 +342,35 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
   /** */
   // Update Relative Element Size
   useEffect(() => {
-    if (touchableRef.current) {
-      const domRect = touchableRef.current.getBoundingClientRect();
-      setDomRect(domRect);
-      setInitialRect({
-        width: domRect.width,
-        height: domRect.height,
-      } as any);
-    }
+    const updateDomRect = () => {
+      if (touchableRef.current) {
+        const domRect = touchableRef.current.getBoundingClientRect();
+        setDomRect(domRect);
+        setInitialSize({
+          width: domRect.width,
+          height: domRect.height,
+        });
+      }
+    };
+    updateDomRect();
 
     // if child is only element that has size,
     // update domRect to child size after image is loaded
     const img = touchableRef.current?.querySelector("img") as HTMLImageElement;
     if (img) {
-      img.onload = (_: Event) => {
+      img.onload = () => {
         const imgDomRect = img.getBoundingClientRect();
-        if (domRect === null || (domRect && domRect.width < imgDomRect.width)) {
+        const currentDomRect =
+          touchableRef.current?.getBoundingClientRect() || null;
+        if (
+          currentDomRect === null ||
+          (currentDomRect && currentDomRect.width < imgDomRect.width)
+        ) {
           setDomRect(imgDomRect);
-          setInitialRect({
+          setInitialSize({
             width: imgDomRect.width,
             height: imgDomRect.height,
-          } as any);
+          });
         }
       };
     }
@@ -368,6 +381,10 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
   // - `isTouching` is used for showing `Handles` component
   useEffect(() => {
     const handleGlobalTouch = (event: TouchEvent) => {
+      if (props.handleMode === "hide" || props.handleMode === "always") {
+        return;
+      }
+
       const el = event.target as HTMLElement;
       const dragable = el.closest(".touchable__container");
       if (!dragable || dragable.id !== id) {
@@ -385,13 +402,13 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
         handleGlobalTouch as unknown as EventListener
       );
     };
-  }, [id]);
+  }, [id, props.handleMode]);
 
   const resetToInitialState = () => {
     const touchable = touchableRef.current;
 
-    if (touchableRef.current && touchable && initialRect) {
-      const { width, height } = initialRect;
+    if (touchableRef.current && touchable && initialSize) {
+      const { width, height } = initialSize;
       const currentStyle = getStyle(touchable);
       const deltaWidth = width - currentStyle.width;
       const deltaHeight = height - currentStyle.height;
