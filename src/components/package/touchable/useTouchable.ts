@@ -1,6 +1,7 @@
 import {
-  TouchEvent,
-  TouchEventHandler,
+  type Touch,
+  type TouchEvent,
+  type TouchEventHandler,
   useEffect,
   useRef,
   useState,
@@ -34,9 +35,13 @@ const defaultValues: ContextValue = {
 };
 
 const useTouchable = ({ id, ...props }: UseTouchableProps) => {
-  const touchableRef = useRef<HTMLDivElement>(null);
   const eventCacheRef = useRef<TouchEvent | null>(null);
+  const touchableRef = useRef<HTMLDivElement>(null);
+  const touchCountRef = useRef<number>(0);
+  const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [domRect, setDomRect] = useState<DOMRect | null>(null);
+  const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
+
   const [isTouching, setIsTouching] = useState(false);
   const { minTrashhold = 20, maxTrashhold = Infinity, ...contextProps } = props;
   const contextValue = {
@@ -70,6 +75,43 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
 
       touchable.style.left = `${newLeft}px`;
       touchable.style.top = `${newTop}px`;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const rotate = (event: TouchEvent, touchable: HTMLElement) => {
+    const cachedTouches = eventCacheRef.current?.touches;
+    const touches = Array.from(event.touches);
+    if (!cachedTouches || cachedTouches.length < 2 || touches.length < 2)
+      return;
+
+    try {
+      const getAngle = (touch1: Touch, touch2: Touch) => {
+        return (
+          (Math.atan2(
+            touch2.clientY - touch1.clientY,
+            touch2.clientX - touch1.clientX
+          ) *
+            180) /
+          Math.PI
+        );
+      };
+
+      const currentAngle = getAngle(touches[0], touches[1]);
+      const previousAngle = getAngle(cachedTouches[0], cachedTouches[1]);
+
+      const rotation = currentAngle - previousAngle;
+      const currentRotation = getComputedStyle(touchable).transform;
+      let currentDegrees = 0;
+
+      if (currentRotation && currentRotation !== "none") {
+        const matrix = new DOMMatrix(currentRotation);
+        currentDegrees = (Math.atan2(matrix.b, matrix.a) * 180) / Math.PI;
+      }
+
+      const newRotation = currentDegrees + rotation;
+      touchable.style.transform = `rotate(${newRotation}deg)`;
     } catch (e) {
       console.error(e);
     }
@@ -179,10 +221,12 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
    * Touch Event Handler
    */
   /** */
-  const onTouchStart: EventHandler = (event: TouchEvent) => {
+  const onTouchStart = (event: TouchEvent) => {
     const touchable = touchableRef.current;
     if (!touchable) return;
+
     updateIsTouching(touchable);
+    updateTouchCount();
     eventCacheRef.current = event;
   };
 
@@ -202,6 +246,7 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
     }
     if (event.touches.length === 2) {
       pinchZoom(event, touchable);
+      rotate(event, touchable);
     }
     eventCacheRef.current = event;
   };
@@ -214,12 +259,26 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
    * State Update
    */
   /** */
-  const updateIsTouching = (touchable: HTMLElement) => {
-    if (!touchable || touchable.id !== id) {
+  const updateIsTouching = (el: HTMLElement | null) => {
+    if (!el || el.id !== id) {
       setIsTouching(false);
       return;
     }
     setIsTouching(true);
+  };
+
+  const updateTouchCount = () => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+    }
+    touchCountRef.current += 1;
+    if (touchCountRef.current >= 3) {
+      resetToInitialState();
+    }
+
+    touchTimerRef.current = setTimeout(() => {
+      touchCountRef.current = 0;
+    }, 300);
   };
 
   const updateElement = ({
@@ -281,6 +340,10 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
     if (touchableRef.current) {
       const domRect = touchableRef.current.getBoundingClientRect();
       setDomRect(domRect);
+      setInitialRect({
+        width: domRect.width,
+        height: domRect.height,
+      } as any);
     }
 
     // if child is only element that has size,
@@ -291,6 +354,10 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
         const imgDomRect = img.getBoundingClientRect();
         if (domRect === null || (domRect && domRect.width < imgDomRect.width)) {
           setDomRect(imgDomRect);
+          setInitialRect({
+            width: imgDomRect.width,
+            height: imgDomRect.height,
+          } as any);
         }
       };
     }
@@ -319,6 +386,28 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
       );
     };
   }, [id]);
+
+  const resetToInitialState = () => {
+    const touchable = touchableRef.current;
+
+    if (touchableRef.current && touchable && initialRect) {
+      const { width, height } = initialRect;
+      const currentStyle = getStyle(touchable);
+      const deltaWidth = width - currentStyle.width;
+      const deltaHeight = height - currentStyle.height;
+      const newLeft = currentStyle.left - deltaWidth / 2;
+      const newTop = currentStyle.top - deltaHeight / 2;
+
+      touchable.style.transform = `rotate(0deg)`;
+      updateElement({
+        touchable,
+        width,
+        height,
+        left: newLeft,
+        top: newTop,
+      });
+    }
+  };
 
   return {
     contextValue,

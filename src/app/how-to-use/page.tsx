@@ -29,6 +29,7 @@ const Page = () => {
           width={100}
           height={100}
           className="w-full h-full w-28 h-28"
+          priority
         />
         <Touchable.Handles />
       </Touchable>

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { createContext, isValidElement, useContext } from "react";
+import { createContext, useContext } from "react";
 import { COLOR, POSITION } from "./constant";
 import useTouchable from "./useTouchable";
 
