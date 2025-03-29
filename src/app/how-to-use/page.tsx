@@ -24,13 +24,13 @@ const Page = () => {
         <Touchable.Handles />
       </Touchable>
 
-      <Touchable id="test-2" className="-mt-10 ml-4">
+      <Touchable id="test-2" className="-mt-16 ml-4">
         <Image
           src="/sun.png"
           alt="sun"
           width={100}
           height={100}
-          className="w-full h-full"
+          className="w-full h-full w-28 h-28"
         />
         <Touchable.Handles />
       </Touchable>

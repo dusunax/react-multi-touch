@@ -282,9 +282,23 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
       const domRect = touchableRef.current.getBoundingClientRect();
       setDomRect(domRect);
     }
+
+    // if child is only element that has size,
+    // update domRect to child size after image is loaded
+    const img = touchableRef.current?.querySelector("img") as HTMLImageElement;
+    if (img) {
+      img.onload = (_: Event) => {
+        const imgDomRect = img.getBoundingClientRect();
+        if (domRect === null || (domRect && domRect.width < imgDomRect.width)) {
+          setDomRect(imgDomRect);
+        }
+      };
+    }
   }, []);
 
-  // Update isTouching on Global Touch Start
+  // Update `isTouching` on Global Touch Start
+  // - set `isTouching` to `false` when touchable is not touched
+  // - `isTouching` is used for showing `Handles` component
   useEffect(() => {
     const handleGlobalTouch = (event: TouchEvent) => {
       const el = event.target as HTMLElement;
