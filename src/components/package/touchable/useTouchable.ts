@@ -35,7 +35,7 @@ const defaultValues: ContextValue = {
 };
 
 const useTouchable = (props: UseTouchableProps) => {
-  const { id, handleMode = DEFAULT_HANDLE_MODE } = props;
+  const { id, handleMode = DEFAULT_HANDLE_MODE, events: userSetEvents } = props;
   const eventCacheRef = useRef<TouchEvent | null>(null);
   const touchableRef = useRef<HTMLDivElement>(null);
   const touchCountRef = useRef<number>(0);
@@ -228,6 +228,8 @@ const useTouchable = (props: UseTouchableProps) => {
    */
   /** */
   const onTouchStart = (event: TouchEvent) => {
+    userSetEvents?.onTouchStart?.(event as TouchEvent<HTMLDivElement>);
+
     const touchable = touchableRef.current;
     if (!touchable) return;
     if (handleMode === "hide" || handleMode === "always") {
@@ -240,6 +242,8 @@ const useTouchable = (props: UseTouchableProps) => {
   };
 
   const onTouchMove: EventHandler = (event: TouchEvent) => {
+    userSetEvents?.onTouchMove?.(event as TouchEvent<HTMLDivElement>);
+
     const touchable = touchableRef.current;
     if (!touchable) return;
 
@@ -260,7 +264,9 @@ const useTouchable = (props: UseTouchableProps) => {
     eventCacheRef.current = event;
   };
 
-  const onTouchEnd: EventHandler = () => {
+  const onTouchEnd: EventHandler = (event: TouchEvent) => {
+    userSetEvents?.onTouchEnd?.(event as TouchEvent<HTMLDivElement>);
+
     eventCacheRef.current = null;
   };
 
