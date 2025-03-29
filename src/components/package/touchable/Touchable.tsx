@@ -1,39 +1,19 @@
 import Image from "next/image";
 import { createContext, useContext } from "react";
-import { COLOR, DEFAULT_HANDLE_MODE, POSITION, HANDLE_MODE } from "./constant";
-import useTouchable from "./useTouchable";
+import { COLOR, POSITION } from "./constant";
+import useTouchable, { UseTouchableProps } from "./useTouchable";
 
+type TouchableProps = UseTouchableProps;
 type ContextValue = ReturnType<typeof useTouchable>["contextValue"];
 interface TouchableContext extends ContextValue {
   isTouching: boolean;
 }
-
-interface TouchableProps {
-  id: string;
-  children: React.ReactNode;
-  className?: string;
-  cornerImageSrc?: TouchableContext["cornerImageSrc"];
-  cornerStyle?: TouchableContext["cornerStyle"];
-  minTrashhold?: number;
-  maxTrashhold?: number;
-  handleMode?: (typeof HANDLE_MODE)[number];
-}
-
 const TouchableContext = createContext<TouchableContext | undefined>(undefined);
 
-const Touchable = ({
-  id,
-  children,
-  className = "",
-  ...props
-}: TouchableProps) => {
-  const { size, touchableRef, events, contextValue, isTouching } = useTouchable(
-    {
-      id,
-      handleMode: props.handleMode || DEFAULT_HANDLE_MODE,
-      ...props,
-    }
-  );
+const Touchable = (props: TouchableProps) => {
+  const { id, children, className = "", handleMode } = props;
+  const { size, touchableRef, events, contextValue, isTouching } =
+    useTouchable(props);
 
   return (
     <TouchableContext.Provider value={{ ...contextValue, isTouching }}>
@@ -41,7 +21,7 @@ const Touchable = ({
         className={`absolute touchable__container ${className} ${
           !size.width || !size.height ? "invisible" : ""
         } ${isTouching ? "touching" : ""}
-        ${isTouching && props.handleMode === "touching" ? "z-100" : ""}`}
+        ${isTouching && handleMode === "touching" ? "z-100" : ""}`}
         id={id}
         ref={touchableRef}
         {...events}

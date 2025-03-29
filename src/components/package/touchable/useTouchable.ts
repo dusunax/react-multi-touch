@@ -6,32 +6,36 @@ import {
   useRef,
   useState,
 } from "react";
-import { POSITION, HANDLE_MODE } from "./constant";
+import { DEFAULT_HANDLE_MODE, HANDLE_MODE, POSITION } from "./constant";
 
-interface UseTouchableProps {
+export interface UseTouchableProps {
   id: string;
+  children: React.ReactNode;
+  className?: string;
   cornerImageSrc?: string;
   cornerStyle?: string;
-  isTouchable?: boolean;
   minTrashhold?: number;
   maxTrashhold?: number;
-  showCorner?: boolean;
   handleMode?: (typeof HANDLE_MODE)[number];
+  events?: {
+    onTouchStart?: EventHandler;
+    onTouchMove?: EventHandler;
+    onTouchEnd?: EventHandler;
+  };
 }
-
 type EventHandler = TouchEventHandler<HTMLDivElement>;
 type ContextValue = Required<
-  Pick<UseTouchableProps, "cornerImageSrc" | "cornerStyle" | "showCorner">
+  Pick<UseTouchableProps, "cornerImageSrc" | "cornerStyle">
 >;
 type PinchZoomSide = keyof typeof POSITION | "center";
 
 const defaultValues: ContextValue = {
   cornerImageSrc: "",
   cornerStyle: "",
-  showCorner: true,
 };
 
-const useTouchable = ({ id, ...props }: UseTouchableProps) => {
+const useTouchable = (props: UseTouchableProps) => {
+  const { id, handleMode = DEFAULT_HANDLE_MODE } = props;
   const eventCacheRef = useRef<TouchEvent | null>(null);
   const touchableRef = useRef<HTMLDivElement>(null);
   const touchCountRef = useRef<number>(0);
@@ -43,7 +47,7 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
   > | null>(null);
 
   const [isTouching, setIsTouching] = useState(
-    props.handleMode === "always" ? true : false
+    handleMode === "always" ? true : false
   );
   const { minTrashhold = 20, maxTrashhold = Infinity, ...contextProps } = props;
   const contextValue = {
@@ -226,7 +230,7 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
   const onTouchStart = (event: TouchEvent) => {
     const touchable = touchableRef.current;
     if (!touchable) return;
-    if (props.handleMode === "hide" || props.handleMode === "always") {
+    if (handleMode === "hide" || handleMode === "always") {
       return;
     }
 
@@ -381,7 +385,7 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
   // - `isTouching` is used for showing `Handles` component
   useEffect(() => {
     const handleGlobalTouch = (event: TouchEvent) => {
-      if (props.handleMode === "hide" || props.handleMode === "always") {
+      if (handleMode === "hide" || handleMode === "always") {
         return;
       }
 
@@ -402,7 +406,7 @@ const useTouchable = ({ id, ...props }: UseTouchableProps) => {
         handleGlobalTouch as unknown as EventListener
       );
     };
-  }, [id, props.handleMode]);
+  }, [id, handleMode]);
 
   const resetToInitialState = () => {
     const touchable = touchableRef.current;
