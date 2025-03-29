@@ -7,5 +7,6 @@ const POSITION = {
 };
 const HANDLE_MODE = ["always", "touching", "hide"] as const;
 const DEFAULT_HANDLE_MODE = "touching";
+const ACTION_MODE = ["drag", "scale", "rotate"] as const;
 
-export { COLOR, POSITION, HANDLE_MODE, DEFAULT_HANDLE_MODE };
+export { COLOR, POSITION, HANDLE_MODE, DEFAULT_HANDLE_MODE, ACTION_MODE };

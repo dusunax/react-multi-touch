@@ -1,22 +1,35 @@
 import Image from "next/image";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { COLOR, POSITION } from "./constant";
-import useTouchable, { UseTouchableProps } from "./useTouchable";
+import useTouchable, {
+  UseTouchableProps,
+  UseTouchableReturns,
+} from "./useTouchable";
 
 type TouchableProps = UseTouchableProps;
-type ContextValue = ReturnType<typeof useTouchable>["contextValue"];
+type ContextValue = UseTouchableReturns["contextValue"];
 interface TouchableContext extends ContextValue {
-  isTouching: boolean;
+  isTouching: UseTouchableReturns["isTouching"];
+  toggleActionMode: UseTouchableReturns["toggleActionMode"];
 }
 const TouchableContext = createContext<TouchableContext | undefined>(undefined);
 
 const Touchable = (props: TouchableProps) => {
   const { id, children, className = "", handleMode } = props;
-  const { size, touchableRef, events, contextValue, isTouching } =
-    useTouchable(props);
+  const {
+    size,
+    touchableRef,
+    events,
+    contextValue,
+    isTouching,
+    toggleActionMode,
+    actionModes,
+  } = useTouchable(props);
 
   return (
-    <TouchableContext.Provider value={{ ...contextValue, isTouching }}>
+    <TouchableContext.Provider
+      value={{ ...contextValue, isTouching, toggleActionMode, actionModes }}
+    >
       <div
         className={`absolute touchable__container ${className} ${
           !size.width || !size.height ? "invisible" : ""
@@ -89,7 +102,120 @@ const CornerHandle = ({ position }: { position: keyof typeof POSITION }) => {
   );
 };
 
+const ControlSetting = ({ className = "" }: { className?: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ctx = useContext(TouchableContext);
+
+  useEffect(() => {
+    const handleClickOutside = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".control-buttons-box")) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("pointerdown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("pointerdown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  if (!ctx) return null;
+  const { isTouching } = ctx;
+
+  return (
+    <div
+      className={`touchable__control absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full mt-2 ${
+        !isTouching ? "invisible" : ""
+      } ${className}`}
+    >
+      {isOpen ? (
+        <ControlButtonsBox />
+      ) : (
+        <button
+          className="mt-2 p-1 bg-white rounded-full shadow-md"
+          onPointerDown={() => setIsOpen((prev) => !prev)}
+        >
+          <Image
+            src="/icons/setting.svg"
+            alt="control"
+            width={12}
+            height={12}
+          />
+        </button>
+      )}
+    </div>
+  );
+};
+
+const ControlButtonsBox = ({ className = "" }) => {
+  const ctx = useContext(TouchableContext);
+  if (!ctx) return null;
+  const { toggleActionMode, actionModes } = ctx;
+
+  return (
+    <div
+      className={`control-buttons-box flex items-center gap-2 py-2 px-3 bg-white rounded-lg shadow-md border border-gray-100 ${className}`}
+    >
+      <ControlButton
+        onPointerDown={() => {
+          toggleActionMode("drag");
+        }}
+        src="/icons/move.svg"
+        alt="move"
+        on={actionModes?.has("drag") ?? false}
+      />
+      <ControlButton
+        onPointerDown={() => {
+          toggleActionMode("rotate");
+        }}
+        src="/icons/rotate.svg"
+        alt="rotate"
+        on={actionModes?.has("rotate") ?? false}
+      />
+      <ControlButton
+        onPointerDown={() => {
+          toggleActionMode("scale");
+        }}
+        src="/icons/scale.svg"
+        alt="scale"
+        on={actionModes?.has("scale") ?? false}
+      />
+    </div>
+  );
+};
+
+const ControlButton = ({
+  className = "",
+  onPointerDown,
+  src,
+  alt,
+  size = 16,
+  on,
+}: {
+  className?: string;
+  onPointerDown: () => void;
+  src: string;
+  alt: string;
+  size?: number;
+  on: boolean;
+}) => {
+  return (
+    <button
+      className={`shrink-0 ${on ? "" : "opacity-30"} ${className}`}
+      onPointerDown={onPointerDown}
+      style={{ width: size, height: size }}
+    >
+      <Image src={src} alt={alt} width={size} height={size} />
+    </button>
+  );
+};
+
 Touchable.displayName = "Touchable";
 Touchable.Handles = Handles;
+Touchable.ControlSetting = ControlSetting;
 
 export default Touchable;

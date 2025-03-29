@@ -6,7 +6,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { DEFAULT_HANDLE_MODE, HANDLE_MODE, POSITION } from "./constant";
+import {
+  ACTION_MODE,
+  DEFAULT_HANDLE_MODE,
+  HANDLE_MODE,
+  POSITION,
+} from "./constant";
 
 export interface UseTouchableProps {
   id: string;
@@ -22,6 +27,7 @@ export interface UseTouchableProps {
     onTouchMove?: EventHandler;
     onTouchEnd?: EventHandler;
   };
+  actionModes?: Set<(typeof ACTION_MODE)[number]>;
 }
 type EventHandler = TouchEventHandler<HTMLDivElement>;
 type ContextValue = Required<
@@ -35,7 +41,12 @@ const defaultValues: ContextValue = {
 };
 
 const useTouchable = (props: UseTouchableProps) => {
-  const { id, handleMode = DEFAULT_HANDLE_MODE, events: userSetEvents } = props;
+  const {
+    id,
+    handleMode = DEFAULT_HANDLE_MODE,
+    events: userSetEvents,
+    actionModes: initialActionModes = new Set(ACTION_MODE),
+  } = props;
   const eventCacheRef = useRef<TouchEvent | null>(null);
   const touchableRef = useRef<HTMLDivElement>(null);
   const touchCountRef = useRef<number>(0);
@@ -45,6 +56,8 @@ const useTouchable = (props: UseTouchableProps) => {
     DOMRect,
     "width" | "height"
   > | null>(null);
+  const [actionModes, setActionModes] =
+    useState<Set<(typeof ACTION_MODE)[number]>>(initialActionModes);
 
   const [isTouching, setIsTouching] = useState(
     handleMode === "always" ? true : false
@@ -232,13 +245,24 @@ const useTouchable = (props: UseTouchableProps) => {
 
     const touchable = touchableRef.current;
     if (!touchable) return;
-    if (handleMode === "hide" || handleMode === "always") {
-      return;
-    }
-
     updateIsTouching(touchable);
-    updateTouchCount();
+
+    if (handleMode === "touching") {
+      updateTouchCount();
+    }
     eventCacheRef.current = event;
+  };
+
+  const toggleActionMode = (mode: (typeof ACTION_MODE)[number]) => {
+    setActionModes((prev) => {
+      const newModes = new Set(prev);
+      if (newModes.has(mode)) {
+        newModes.delete(mode);
+      } else {
+        newModes.add(mode);
+      }
+      return newModes;
+    });
   };
 
   const onTouchMove: EventHandler = (event: TouchEvent) => {
@@ -251,15 +275,19 @@ const useTouchable = (props: UseTouchableProps) => {
       const side = (event.target as HTMLElement).getAttribute(
         "data-position"
       ) as PinchZoomSide;
-      if (side) {
+      if (side && actionModes.has("scale")) {
         scaleOnSide(event, side, touchable);
-      } else {
+      } else if (actionModes.has("drag")) {
         drag(event, touchable);
       }
     }
     if (event.touches.length === 2) {
-      pinchZoom(event, touchable);
-      rotate(event, touchable);
+      if (actionModes.has("scale")) {
+        pinchZoom(event, touchable);
+      }
+      if (actionModes.has("rotate")) {
+        rotate(event, touchable);
+      }
     }
     eventCacheRef.current = event;
   };
@@ -317,10 +345,12 @@ const useTouchable = (props: UseTouchableProps) => {
 
       const touchableChild = Array.from(touchable.children) as HTMLElement[];
       if (!touchableChild) return;
-      touchableChild.forEach((child) => {
-        child.style.width = `${newWidth}px`;
-        child.style.height = `${newHeight}px`;
-      });
+      touchableChild
+        .filter((e) => !e.classList.contains("touchable__control"))
+        .forEach((child) => {
+          child.style.width = `${newWidth}px`;
+          child.style.height = `${newHeight}px`;
+        });
     }
 
     if (left && top) {
@@ -449,7 +479,11 @@ const useTouchable = (props: UseTouchableProps) => {
       height: domRect?.height,
     },
     touchableRef,
+    actionModes,
+    toggleActionMode,
   };
 };
+
+export type UseTouchableReturns = ReturnType<typeof useTouchable>;
 
 export default useTouchable;

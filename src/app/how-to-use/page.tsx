@@ -49,7 +49,7 @@ const Page = () => {
         <Touchable.Handles />
       </Touchable>
 
-      <Touchable id="test-2" className="-mt-16 ml-4">
+      <Touchable id="test-2" className="-mt-16 ml-4" handleMode="always">
         <Image
           src="/sun.png"
           alt="sun"
@@ -59,6 +59,7 @@ const Page = () => {
           priority
         />
         <Touchable.Handles />
+        <Touchable.ControlSetting />
       </Touchable>
     </div>
   );
