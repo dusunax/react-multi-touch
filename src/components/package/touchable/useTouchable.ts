@@ -7,10 +7,10 @@ import {
   useState,
 } from "react";
 import {
-  ACTION_MODE,
-  DEFAULT_HANDLE_MODE,
-  HANDLE_MODE,
-  POSITION,
+  INTERACTION_MODES,
+  DEFAULT_HANDLE_VISIBILITY,
+  HANDLE_VISIBILITY_MODES,
+  type RotationSide,
 } from "./constant";
 
 export interface UseTouchableProps {
@@ -21,31 +21,52 @@ export interface UseTouchableProps {
   cornerStyle?: string;
   minTrashhold?: number;
   maxTrashhold?: number;
-  handleMode?: (typeof HANDLE_MODE)[number];
+  handleMode?: (typeof HANDLE_VISIBILITY_MODES)[number];
   events?: {
     onTouchStart?: EventHandler;
     onTouchMove?: EventHandler;
     onTouchEnd?: EventHandler;
   };
-  actionModes?: Set<(typeof ACTION_MODE)[number]>;
+  actionModes?: Set<(typeof INTERACTION_MODES)[number]>;
 }
 type EventHandler = TouchEventHandler<HTMLDivElement>;
 type ContextValue = Required<
   Pick<UseTouchableProps, "cornerImageSrc" | "cornerStyle">
 >;
-type PinchZoomSide = keyof typeof POSITION | "center";
+type PinchZoomSide = RotationSide | "center";
 
 const defaultValues: ContextValue = {
   cornerImageSrc: "",
   cornerStyle: "",
 };
 
+const MOVE_ORIGIN = {
+  "top-left": [-1, -1],
+  "top-right": [0, -1],
+  "bottom-left": [-1, 0],
+  "bottom-right": [0, 0],
+} as const;
+
+const ROTATION_SIDES = {
+  0: "top-left",
+  1: "top-right",
+  2: "bottom-left",
+  3: "bottom-right",
+} as const;
+
+const SIDE_MAP = {
+  top: [0, 1, 2, 3],
+  left: [2, 0, 3, 1],
+  bottom: [3, 2, 1, 0],
+  right: [1, 3, 0, 2],
+} as const;
+
 const useTouchable = (props: UseTouchableProps) => {
   const {
     id,
-    handleMode = DEFAULT_HANDLE_MODE,
+    handleMode = DEFAULT_HANDLE_VISIBILITY,
     events: userSetEvents,
-    actionModes: initialActionModes = new Set(ACTION_MODE),
+    actionModes: initialActionModes = new Set(INTERACTION_MODES),
   } = props;
   const eventCacheRef = useRef<TouchEvent | null>(null);
   const touchableRef = useRef<HTMLDivElement>(null);
@@ -57,7 +78,7 @@ const useTouchable = (props: UseTouchableProps) => {
     "width" | "height"
   > | null>(null);
   const [actionModes, setActionModes] =
-    useState<Set<(typeof ACTION_MODE)[number]>>(initialActionModes);
+    useState<Set<(typeof INTERACTION_MODES)[number]>>(initialActionModes);
 
   const [isTouching, setIsTouching] = useState(
     handleMode === "always" ? true : false
@@ -131,6 +152,20 @@ const useTouchable = (props: UseTouchableProps) => {
 
       const newRotation = currentDegrees + rotation;
       touchable.style.transform = `rotate(${newRotation}deg)`;
+
+      const normalizedRotation = ((newRotation % 360) + 360) % 360;
+      let currentTop;
+      if (normalizedRotation <= 45 || normalizedRotation > 315) {
+        currentTop = "top";
+      } else if (normalizedRotation <= 135) {
+        currentTop = "right";
+      } else if (normalizedRotation <= 225) {
+        currentTop = "bottom";
+      } else {
+        currentTop = "left";
+      }
+
+      touchable.dataset.currentTop = currentTop;
     } catch (e) {
       console.error(e);
     }
@@ -146,7 +181,7 @@ const useTouchable = (props: UseTouchableProps) => {
     touchable: HTMLElement
   ) => {
     const cachedTouches = eventCacheRef.current?.touches;
-    if (!cachedTouches) return;
+    if (!cachedTouches || side === "center") return;
 
     try {
       const touch = Array.from(event.touches)[0];
@@ -163,35 +198,44 @@ const useTouchable = (props: UseTouchableProps) => {
       let newLeft = style.left;
       let newTop = style.top;
 
+      const currentTop = touchable.dataset.currentTop as keyof typeof SIDE_MAP;
+      const sideMap = SIDE_MAP[currentTop] ?? SIDE_MAP.top;
+      const sideIndex = Object.values(ROTATION_SIDES).indexOf(side);
+      const adjustedSideIndex = sideMap[sideIndex];
+      const adjustSide =
+        ROTATION_SIDES[adjustedSideIndex as keyof typeof ROTATION_SIDES];
+      const moveOrigin = MOVE_ORIGIN[adjustSide as keyof typeof MOVE_ORIGIN];
+
       switch (side) {
         case "top-left":
-          newWidth = style.width - diffX;
-          newHeight = style.height - diffY;
-          newLeft = style.left + diffX;
-          newTop = style.top + diffY;
+          newWidth -= diffX;
+          newHeight -= diffY;
           break;
         case "top-right":
-          newWidth = style.width + diffX;
-          newHeight = style.height - diffY;
-          newTop = style.top + diffY;
+          newWidth += diffX;
+          newHeight -= diffY;
           break;
         case "bottom-left":
-          newWidth = style.width - diffX;
-          newHeight = style.height + diffY;
-          newLeft = style.left + diffX;
+          newWidth -= diffX;
+          newHeight += diffY;
           break;
         case "bottom-right":
-          newWidth = style.width + diffX;
-          newHeight = style.height + diffY;
+          newWidth += diffX;
+          newHeight += diffY;
           break;
       }
 
-      updateElement({
-        touchable,
-        width: newWidth,
-        height: newHeight,
-        left: newLeft,
-        top: newTop,
+      newLeft -= moveOrigin[0] * diffX;
+      newTop -= moveOrigin[1] * diffY;
+
+      requestAnimationFrame(() => {
+        updateElement({
+          touchable,
+          width: newWidth,
+          height: newHeight,
+          left: newLeft,
+          top: newTop,
+        });
       });
     } catch (e) {
       console.error(e);
@@ -245,15 +289,13 @@ const useTouchable = (props: UseTouchableProps) => {
 
     const touchable = touchableRef.current;
     if (!touchable) return;
+    updateTouchCount();
     updateIsTouching(touchable);
 
-    if (handleMode === "touching") {
-      updateTouchCount();
-    }
     eventCacheRef.current = event;
   };
 
-  const toggleActionMode = (mode: (typeof ACTION_MODE)[number]) => {
+  const toggleActionMode = (mode: (typeof INTERACTION_MODES)[number]) => {
     setActionModes((prev) => {
       const newModes = new Set(prev);
       if (newModes.has(mode)) {

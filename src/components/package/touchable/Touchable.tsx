@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { createContext, useContext, useEffect, useState } from "react";
-import { COLOR, POSITION } from "./constant";
+import { HANDLE_COLOR, ROTATION_SIDES, HANDLE_POSITIONS } from "./constant";
 import useTouchable, {
   UseTouchableProps,
   UseTouchableReturns,
@@ -37,9 +37,11 @@ const Touchable = (props: TouchableProps) => {
         ${isTouching && handleMode === "touching" ? "z-100" : ""}`}
         id={id}
         ref={touchableRef}
+        data-current-top="top"
         {...events}
       >
         {children}
+        <div className="absolute log bg-red-500 !h-auto text-xs"></div>
       </div>
       <div style={{ ...size }} className="touchable__relative-size" />
     </TouchableContext.Provider>
@@ -57,30 +59,31 @@ const Handles = ({ className = "" }: { className?: string }) => {
         !isTouching ? "invisible" : ""
       } ${className} `}
     >
-      {Object.keys(POSITION).map((position) => (
+      {Object.keys(ROTATION_SIDES).map((sideId) => (
         <CornerHandle
-          key={position}
-          position={position as keyof typeof POSITION}
+          key={sideId}
+          sideId={sideId as unknown as keyof typeof ROTATION_SIDES}
         />
       ))}
       <div
         className={`absolute w-[calc(100%-8px)] h-[calc(100%-8px)] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 box-content border border-dotted ${
-          "border-" + COLOR
+          "border-" + HANDLE_COLOR
         } -z-1`}
       ></div>
     </div>
   );
 };
 
-const CornerHandle = ({ position }: { position: keyof typeof POSITION }) => {
+const CornerHandle = ({ sideId }: { sideId: keyof typeof ROTATION_SIDES }) => {
   const ctx = useContext(TouchableContext);
   if (!ctx) return null;
   const { cornerImageSrc, cornerStyle } = ctx;
+  const side = ROTATION_SIDES[sideId];
 
   return (
     <div
-      className={`absolute ${POSITION[position]}  ${cornerStyle} p-4 z-10`}
-      data-position={position}
+      className={`absolute touchable__corner-handle ${HANDLE_POSITIONS[side]} ${cornerStyle} p-4 z-10`}
+      data-position={side}
     >
       {cornerImageSrc ? (
         <Image
@@ -95,7 +98,7 @@ const CornerHandle = ({ position }: { position: keyof typeof POSITION }) => {
         />
       ) : (
         <div
-          className={`bg-white border rounded-xs border-${COLOR} w-2 h-2 pointer-events-none`}
+          className={`bg-white border rounded-xs border-${HANDLE_COLOR} w-2 h-2 pointer-events-none`}
         />
       )}
     </div>
