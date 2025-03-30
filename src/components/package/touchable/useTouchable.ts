@@ -79,6 +79,7 @@ const useTouchable = (props: UseTouchableProps) => {
   > | null>(null);
   const [actionModes, setActionModes] =
     useState<Set<(typeof INTERACTION_MODES)[number]>>(initialActionModes);
+  const [isInitialState, setIsInitialState] = useState(true);
 
   const [isTouching, setIsTouching] = useState(
     handleMode === "always" ? true : false
@@ -87,6 +88,7 @@ const useTouchable = (props: UseTouchableProps) => {
   const contextValue = {
     ...defaultValues,
     ...contextProps,
+    isInitialState,
   };
 
   if (minTrashhold > maxTrashhold) {
@@ -293,18 +295,9 @@ const useTouchable = (props: UseTouchableProps) => {
     updateIsTouching(touchable);
 
     eventCacheRef.current = event;
-  };
-
-  const toggleActionMode = (mode: (typeof INTERACTION_MODES)[number]) => {
-    setActionModes((prev) => {
-      const newModes = new Set(prev);
-      if (newModes.has(mode)) {
-        newModes.delete(mode);
-      } else {
-        newModes.add(mode);
-      }
-      return newModes;
-    });
+    if (isInitialState) {
+      setIsInitialState(false);
+    }
   };
 
   const onTouchMove: EventHandler = (event: TouchEvent) => {
@@ -399,6 +392,18 @@ const useTouchable = (props: UseTouchableProps) => {
       touchable.style.left = `${left}px`;
       touchable.style.top = `${top}px`;
     }
+  };
+
+  const toggleActionMode = (mode: (typeof INTERACTION_MODES)[number]) => {
+    setActionModes((prev) => {
+      const newModes = new Set(prev);
+      if (newModes.has(mode)) {
+        newModes.delete(mode);
+      } else {
+        newModes.add(mode);
+      }
+      return newModes;
+    });
   };
 
   /**
@@ -506,6 +511,8 @@ const useTouchable = (props: UseTouchableProps) => {
         top: newTop,
       });
     }
+    setActionModes(new Set(INTERACTION_MODES));
+    setIsInitialState(true);
   };
 
   return {
@@ -523,6 +530,8 @@ const useTouchable = (props: UseTouchableProps) => {
     touchableRef,
     actionModes,
     toggleActionMode,
+    resetToInitialState,
+    isInitialState,
   };
 };
 

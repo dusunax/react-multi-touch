@@ -11,6 +11,7 @@ type ContextValue = UseTouchableReturns["contextValue"];
 interface TouchableContext extends ContextValue {
   isTouching: UseTouchableReturns["isTouching"];
   toggleActionMode: UseTouchableReturns["toggleActionMode"];
+  resetToInitialState: UseTouchableReturns["resetToInitialState"];
 }
 const TouchableContext = createContext<TouchableContext | undefined>(undefined);
 
@@ -24,11 +25,18 @@ const Touchable = (props: TouchableProps) => {
     isTouching,
     toggleActionMode,
     actionModes,
+    resetToInitialState,
   } = useTouchable(props);
 
   return (
     <TouchableContext.Provider
-      value={{ ...contextValue, isTouching, toggleActionMode, actionModes }}
+      value={{
+        ...contextValue,
+        isTouching,
+        toggleActionMode,
+        actionModes,
+        resetToInitialState,
+      }}
     >
       <div
         className={`absolute touchable__container ${className} ${
@@ -106,7 +114,8 @@ const CornerHandle = ({ sideId }: { sideId: keyof typeof ROTATION_SIDES }) => {
 };
 
 const ControlSetting = ({ className = "" }: { className?: string }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  // const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const ctx = useContext(TouchableContext);
 
   useEffect(() => {
@@ -157,36 +166,51 @@ const ControlSetting = ({ className = "" }: { className?: string }) => {
 const ControlButtonsBox = ({ className = "" }) => {
   const ctx = useContext(TouchableContext);
   if (!ctx) return null;
-  const { toggleActionMode, actionModes } = ctx;
+  const { toggleActionMode, actionModes, resetToInitialState, isInitialState } =
+    ctx;
 
   return (
-    <div
-      className={`control-buttons-box flex items-center gap-2 py-2 px-3 bg-white rounded-lg shadow-md border border-gray-100 ${className}`}
-    >
-      <ControlButton
-        onPointerDown={() => {
-          toggleActionMode("drag");
-        }}
-        src="/icons/move.svg"
-        alt="move"
-        on={actionModes?.has("drag") ?? false}
-      />
-      <ControlButton
-        onPointerDown={() => {
-          toggleActionMode("rotate");
-        }}
-        src="/icons/rotate.svg"
-        alt="rotate"
-        on={actionModes?.has("rotate") ?? false}
-      />
-      <ControlButton
-        onPointerDown={() => {
-          toggleActionMode("scale");
-        }}
-        src="/icons/scale.svg"
-        alt="scale"
-        on={actionModes?.has("scale") ?? false}
-      />
+    <div>
+      <div
+        className={`control-buttons-box flex items-center gap-2 p-2 bg-white rounded-lg shadow-md border border-gray-100 ${className}`}
+      >
+        {!isInitialState && (
+          <ControlButton
+            onPointerDown={() => {
+              resetToInitialState();
+            }}
+            src="/icons/reset.svg"
+            alt="reset"
+            on
+            className="absolute -left-1 bg-gray-200 -translate-x-full rounded-full center !w-6 !h-6 shadow-md"
+            size={14}
+          />
+        )}
+        <ControlButton
+          onPointerDown={() => {
+            toggleActionMode("drag");
+          }}
+          src="/icons/move.svg"
+          alt="move"
+          on={actionModes?.has("drag") ?? false}
+        />
+        <ControlButton
+          onPointerDown={() => {
+            toggleActionMode("rotate");
+          }}
+          src="/icons/rotate.svg"
+          alt="rotate"
+          on={actionModes?.has("rotate") ?? false}
+        />
+        <ControlButton
+          onPointerDown={() => {
+            toggleActionMode("scale");
+          }}
+          src="/icons/scale.svg"
+          alt="scale"
+          on={actionModes?.has("scale") ?? false}
+        />
+      </div>
     </div>
   );
 };
