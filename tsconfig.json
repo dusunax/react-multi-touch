@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "src/packages/*": ["./src/*"]
+      "@components/*": ["./src/components/package/touchable/*"],
+      "@constants/*": ["./src/components/package/touchable/*"],
+      "@hooks/*": ["./src/components/package/touchable/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

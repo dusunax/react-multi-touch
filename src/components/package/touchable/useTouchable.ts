@@ -2,7 +2,9 @@ import {
   type Touch,
   type TouchEvent,
   type TouchEventHandler,
+  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -11,7 +13,8 @@ import {
   DEFAULT_HANDLE_VISIBILITY,
   HANDLE_VISIBILITY_MODES,
   type RotationSide,
-} from "./constant";
+} from "@constants/constant";
+import { ERRORS } from "@constants/errors";
 
 export interface UseTouchableProps {
   id: string;
@@ -91,9 +94,17 @@ const useTouchable = (props: UseTouchableProps) => {
     isInitialState,
   };
 
-  if (minTrashhold > maxTrashhold) {
-    throw new Error("Touchable: minTrashhold must be less than maxTrashhold");
-  }
+  /**
+   * Validation
+   */
+  useEffect(() => {
+    if (minTrashhold > maxTrashhold) {
+      throw new Error(ERRORS["INVAILD_TRASHOLD"].message);
+    }
+    if (!("PointerEvent" in window && navigator.maxTouchPoints > 0)) {
+      console.error(ERRORS["NOT_SUPPORTED"].message);
+    }
+  }, []);
 
   /**
    * Functionality
@@ -286,52 +297,62 @@ const useTouchable = (props: UseTouchableProps) => {
    * Touch Event Handler
    */
   /** */
-  const onTouchStart = (event: TouchEvent) => {
-    userSetEvents?.onTouchStart?.(event as TouchEvent<HTMLDivElement>);
+  const onTouchStart = useCallback(
+    (event: TouchEvent) => {
+      userSetEvents?.onTouchStart?.(event as TouchEvent<HTMLDivElement>);
 
-    const touchable = touchableRef.current;
-    if (!touchable) return;
-    updateTouchCount();
-    updateIsTouching(touchable);
+      const touchable = touchableRef.current;
+      if (!touchable) return;
 
-    eventCacheRef.current = event;
-    if (isInitialState) {
-      setIsInitialState(false);
-    }
-  };
+      updateTouchCount();
+      updateIsTouching(touchable);
 
-  const onTouchMove: EventHandler = (event: TouchEvent) => {
-    userSetEvents?.onTouchMove?.(event as TouchEvent<HTMLDivElement>);
-
-    const touchable = touchableRef.current;
-    if (!touchable) return;
-
-    if (event.touches.length === 1) {
-      const side = (event.target as HTMLElement).getAttribute(
-        "data-position"
-      ) as PinchZoomSide;
-      if (side && actionModes.has("scale")) {
-        scaleOnSide(event, side, touchable);
-      } else if (actionModes.has("drag")) {
-        drag(event, touchable);
+      eventCacheRef.current = event;
+      if (isInitialState) {
+        setIsInitialState(false);
       }
-    }
-    if (event.touches.length === 2) {
-      if (actionModes.has("scale")) {
-        pinchZoom(event, touchable);
-      }
-      if (actionModes.has("rotate")) {
-        rotate(event, touchable);
-      }
-    }
-    eventCacheRef.current = event;
-  };
+    },
+    [actionModes, touchableRef.current, eventCacheRef.current]
+  );
 
-  const onTouchEnd: EventHandler = (event: TouchEvent) => {
-    userSetEvents?.onTouchEnd?.(event as TouchEvent<HTMLDivElement>);
+  const onTouchMove = useCallback(
+    (event: TouchEvent) => {
+      userSetEvents?.onTouchMove?.(event as TouchEvent<HTMLDivElement>);
 
-    eventCacheRef.current = null;
-  };
+      const touchable = touchableRef.current;
+      if (!touchable) return;
+
+      if (event.touches.length === 1) {
+        const side = (event.target as HTMLElement).getAttribute(
+          "data-position"
+        ) as PinchZoomSide;
+        if (side && actionModes.has("scale")) {
+          scaleOnSide(event, side, touchable);
+        } else if (actionModes.has("drag")) {
+          drag(event, touchable);
+        }
+      }
+      if (event.touches.length === 2) {
+        if (actionModes.has("scale")) {
+          pinchZoom(event, touchable);
+        }
+        if (actionModes.has("rotate")) {
+          rotate(event, touchable);
+        }
+      }
+      eventCacheRef.current = event;
+    },
+    [actionModes, touchableRef.current, eventCacheRef.current]
+  );
+
+  const onTouchEnd = useCallback(
+    (event: TouchEvent) => {
+      userSetEvents?.onTouchEnd?.(event as TouchEvent<HTMLDivElement>);
+
+      eventCacheRef.current = null;
+    },
+    [actionModes, touchableRef.current, eventCacheRef.current]
+  );
 
   /**
    * State Update
@@ -515,13 +536,18 @@ const useTouchable = (props: UseTouchableProps) => {
     setIsInitialState(true);
   };
 
-  return {
-    contextValue,
-    events: {
+  const touchHandlers = useMemo(
+    () => ({
       onTouchStart,
       onTouchMove,
       onTouchEnd,
-    },
+    }),
+    [onTouchStart, onTouchMove, onTouchEnd]
+  );
+
+  return {
+    contextValue,
+    touchHandlers,
     isTouching,
     size: {
       width: domRect?.width,

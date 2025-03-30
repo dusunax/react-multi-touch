@@ -1,10 +1,14 @@
-import Image from "next/image";
+import React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { HANDLE_COLOR, ROTATION_SIDES, HANDLE_POSITIONS } from "./constant";
+import {
+  HANDLE_COLOR,
+  ROTATION_SIDES,
+  HANDLE_POSITIONS,
+} from "@constants/constant";
 import useTouchable, {
   UseTouchableProps,
   UseTouchableReturns,
-} from "./useTouchable";
+} from "@hooks/useTouchable";
 
 type TouchableProps = UseTouchableProps;
 type ContextValue = UseTouchableReturns["contextValue"];
@@ -20,7 +24,7 @@ const Touchable = (props: TouchableProps) => {
   const {
     size,
     touchableRef,
-    events,
+    touchHandlers,
     contextValue,
     isTouching,
     toggleActionMode,
@@ -46,7 +50,7 @@ const Touchable = (props: TouchableProps) => {
         id={id}
         ref={touchableRef}
         data-current-top="top"
-        {...events}
+        {...touchHandlers}
       >
         {children}
         <div className="absolute log bg-red-500 !h-auto text-xs"></div>
@@ -94,7 +98,7 @@ const CornerHandle = ({ sideId }: { sideId: keyof typeof ROTATION_SIDES }) => {
       data-position={side}
     >
       {cornerImageSrc ? (
-        <Image
+        <img
           src={cornerImageSrc}
           alt="corner"
           width={10}
@@ -114,8 +118,7 @@ const CornerHandle = ({ sideId }: { sideId: keyof typeof ROTATION_SIDES }) => {
 };
 
 const ControlSetting = ({ className = "" }: { className?: string }) => {
-  // const [isOpen, setIsOpen] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const ctx = useContext(TouchableContext);
 
   useEffect(() => {
@@ -151,12 +154,7 @@ const ControlSetting = ({ className = "" }: { className?: string }) => {
           className="mt-2 p-1 bg-white rounded-full shadow-md"
           onPointerDown={() => setIsOpen((prev) => !prev)}
         >
-          <Image
-            src="/icons/setting.svg"
-            alt="control"
-            width={12}
-            height={12}
-          />
+          <img src="/icons/setting.svg" alt="control" width={12} height={12} />
         </button>
       )}
     </div>
@@ -236,7 +234,7 @@ const ControlButton = ({
       onPointerDown={onPointerDown}
       style={{ width: size, height: size }}
     >
-      <Image src={src} alt={alt} width={size} height={size} />
+      <img src={src} alt={alt} width={size} height={size} />
     </button>
   );
 };

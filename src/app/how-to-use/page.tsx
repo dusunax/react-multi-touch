@@ -1,7 +1,8 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import Touchable from "src/packages/components/package/touchable/Touchable";
+import Touchable from "@components/Touchable";
+import { MultiTouch } from "react-multi-touch";
 
 const Page = () => {
   const [dimensions, setDimensions] = useState({
@@ -49,7 +50,7 @@ const Page = () => {
         <Touchable.Handles />
       </Touchable>
 
-      <Touchable id="test-2" className="-mt-16 ml-4" handleMode="always">
+      <MultiTouch id="test-2" className="-mt-16 ml-4" handleMode="always">
         <Image
           src="/sun.png"
           alt="sun"
@@ -58,9 +59,9 @@ const Page = () => {
           className="w-full h-full w-28 h-28"
           priority
         />
-        <Touchable.Handles />
-        <Touchable.ControlSetting />
-      </Touchable>
+        <MultiTouch.Handles />
+        <MultiTouch.ControlSetting />
+      </MultiTouch>
     </div>
   );
 };
