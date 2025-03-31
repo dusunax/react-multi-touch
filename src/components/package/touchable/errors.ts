@@ -3,8 +3,9 @@ export const ERRORS = {
     message: "[React-Multi-Touch] Environment does not support touch events.",
     code: 0,
   },
-  INVAILD_TRASHOLD: {
-    message: "[React-Multi-Touch] minTrashhold must be less than maxTrashhold",
+  INVAILD_SCALE_LIMIT: {
+    message:
+      "[React-Multi-Touch] minElementSize must be less than maxElementSize",
     code: 100,
   },
 };

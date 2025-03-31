@@ -22,8 +22,8 @@ export interface UseTouchableProps {
   className?: string;
   cornerImageSrc?: string;
   cornerStyle?: string;
-  minTrashhold?: number;
-  maxTrashhold?: number;
+  minElementSize?: number;
+  maxElementSize?: number;
   handleMode?: (typeof HANDLE_VISIBILITY_MODES)[number];
   events?: {
     onTouchStart?: EventHandler;
@@ -87,7 +87,11 @@ const useTouchable = (props: UseTouchableProps) => {
   const [isTouching, setIsTouching] = useState(
     handleMode === "always" ? true : false
   );
-  const { minTrashhold = 20, maxTrashhold = Infinity, ...contextProps } = props;
+  const {
+    minElementSize = 20,
+    maxElementSize = Infinity,
+    ...contextProps
+  } = props;
   const contextValue = {
     ...defaultValues,
     ...contextProps,
@@ -98,8 +102,8 @@ const useTouchable = (props: UseTouchableProps) => {
    * Validation
    */
   useEffect(() => {
-    if (minTrashhold > maxTrashhold) {
-      throw new Error(ERRORS["INVAILD_TRASHOLD"].message);
+    if (minElementSize > maxElementSize) {
+      throw new Error(ERRORS["INVAILD_SCALE_LIMIT"].message);
     }
     if (!("PointerEvent" in window && navigator.maxTouchPoints > 0)) {
       console.error(ERRORS["NOT_SUPPORTED"].message);
@@ -394,8 +398,14 @@ const useTouchable = (props: UseTouchableProps) => {
     top?: number;
   }) => {
     if (width && height) {
-      const newWidth = Math.max(minTrashhold, Math.min(width, maxTrashhold));
-      const newHeight = Math.max(minTrashhold, Math.min(height, maxTrashhold));
+      const newWidth = Math.max(
+        minElementSize,
+        Math.min(width, maxElementSize)
+      );
+      const newHeight = Math.max(
+        minElementSize,
+        Math.min(height, maxElementSize)
+      );
       touchable.style.width = `${newWidth}px`;
       touchable.style.height = `${newHeight}px`;
 

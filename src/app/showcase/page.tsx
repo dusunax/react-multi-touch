@@ -6,15 +6,15 @@ import { MultiTouch } from "react-multi-touch";
 
 const Page = () => {
   const [dimensions, setDimensions] = useState({
-    maxTrashhold: 1000,
-    minTrashhold: 100,
+    maxElementSize: 1000,
+    minElementSize: 100,
   });
 
   useEffect(() => {
     const updateDimensions = () => {
       setDimensions({
-        maxTrashhold: window.innerWidth - 60,
-        minTrashhold: 100,
+        maxElementSize: window.innerWidth - 60,
+        minElementSize: 100,
       });
     };
     updateDimensions();
@@ -36,15 +36,15 @@ const Page = () => {
     <section className="m-8">
       <Touchable
         id="test-1"
-        maxTrashhold={dimensions.maxTrashhold}
-        minTrashhold={dimensions.minTrashhold}
+        maxElementSize={dimensions.maxElementSize}
+        minElementSize={dimensions.minElementSize}
       >
         <div className="bg-blue-500 w-28 h-28">
           Touchable
           <p className="text-xs truncate">
-            max size is {dimensions.maxTrashhold}
+            max size is {dimensions.maxElementSize}
             <br />
-            min size is {dimensions.minTrashhold}
+            min size is {dimensions.minElementSize}
           </p>
         </div>
         <Touchable.Handles />
