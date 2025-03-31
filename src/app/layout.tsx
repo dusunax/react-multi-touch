@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
 import Header from "../components/Header";
 import ContentsWrapper from "../components/ui/ContentsWrapper";
+import Nav from "../components/Nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,22 +34,7 @@ const RootLayout = ({
           <Header />
           <ContentsWrapper>
             <div className="h-full grid grid-cols-[160px_1fr]">
-              <nav>
-                <ul>
-                  <li>
-                    <Link href="/how-to-use">How to use</Link>
-                  </li>
-                  <li>
-                    <Link href="/components">Components</Link>
-                  </li>
-                  <li>
-                    <Link href="/gesture">Gesture</Link>
-                  </li>
-                  <li>
-                    <Link href="/customs">Customs</Link>
-                  </li>
-                </ul>
-              </nav>
+              <Nav />
               {children}
             </div>
           </ContentsWrapper>
