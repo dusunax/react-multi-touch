@@ -5,7 +5,7 @@ import NavItem from "./ui/NavItem";
 const Nav = () => {
   const pathname = usePathname();
   const navItems = [
-    { href: "/docs/how-to-use", label: "How to use" },
+    { href: "/docs/getting-started", label: "Getting started" },
     { href: "/docs/components", label: "Components" },
     { href: "/docs/gesture", label: "Gesture" },
     { href: "/docs/customs", label: "Customs" },

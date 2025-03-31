@@ -23,7 +23,7 @@ const usageCode = `<MultiTouch>
 const Page = () => {
   return (
     <section className="m-8 space-y-10 flex flex-col">
-      <h1 className="text-2xl font-bold">How to use</h1>
+      <h1 className="text-2xl font-bold">Getting started</h1>
 
       <div className="space-y-2">
         <h2 className="text-xl font-bold">Install</h2>

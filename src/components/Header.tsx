@@ -7,7 +7,7 @@ import NavItem from "./ui/NavItem";
 const Header = () => {
   const pathname = usePathname();
   const navItems = [
-    { href: "/docs/how-to-use", path: "/docs", label: "Docs" },
+    { href: "/docs/getting-started", path: "/docs", label: "Docs" },
     { href: "/showcase", path: "/showcase", label: "Showcase" },
   ];
 
@@ -22,7 +22,7 @@ const Header = () => {
             {navItems.map((item) => (
               <NavItem
                 key={item.href}
-                href={item.path}
+                href={item.href}
                 active={pathname.includes(item.path)}
               >
                 {item.label}
