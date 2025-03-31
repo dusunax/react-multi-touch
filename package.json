@@ -12,8 +12,9 @@
   "dependencies": {
     "next": "15.2.4",
     "react": "^19.0.0",
+    "react-code-blocks": "^0.1.6",
     "react-dom": "^19.0.0",
-    "react-multi-touch": "^1.0.24"
+    "react-multi-touch": "^1.0.25"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

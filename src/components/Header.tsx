@@ -3,7 +3,7 @@ import ContentsWrapper from "./ui/ContentsWrapper";
 
 const Header = () => {
   return (
-    <header className="h-full border-b border-gray-200">
+    <header className="h-full border-b">
       <ContentsWrapper className="flex items-center justify-between h-full">
         <Link href="/">
           <h1 className="font-bold">👐 Multi Touch</h1>

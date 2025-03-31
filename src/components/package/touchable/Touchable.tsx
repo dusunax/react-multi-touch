@@ -67,7 +67,7 @@ const Handles = ({ className = "" }: { className?: string }) => {
 
   return (
     <div
-      className={`absolute w-full h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 box-content ${
+      className={`touchable__handle absolute w-full h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 box-content ${
         !isTouching ? "invisible" : ""
       } ${className} `}
     >

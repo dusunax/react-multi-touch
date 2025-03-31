@@ -17,9 +17,9 @@ npm install react-multi-touch
 
 ## Usage
 ```tsx
-import { Touchable } from "react-multi-touch";
+import { MultiTouch } from "react-multi-touch";
 ...
-<Touchable
+<MultiTouch
   id="your-element-id"
 >
   <div>
@@ -27,21 +27,21 @@ import { Touchable } from "react-multi-touch";
   </div>
   
   {/* Optional: Handles for scaling on corner by 1 finger */}
-  <Touchable.Handles /> 
+  <MultiTouch.Handles /> 
 
   {/* Optional: Control toggle setting for dragging, rotation, scaling and reset buttons */}
-  <Touchable.ControlSetting />
-</Touchable>
+  <MultiTouch.ControlSetting />
+</MultiTouch>
 ```
 
 ## Components
-- `<Touchable />`
-- `<Touchable.Handles />`
-- `<Touchable.ControlSetting />`
+- `<MultiTouch />`
+- `<MultiTouch.Handles />`
+- `<MultiTouch.ControlSetting />`
 
 ## Options
 ```tsx
-<Touchable
+<MultiTouch
   id="test-1" // required
   maxTrashhold={window.innerWidth}
   minTrashhold={60}
@@ -57,5 +57,5 @@ import { Touchable } from "react-multi-touch";
   }}
 >
   {/* Your element */}
-</Touchable>
+</MultiTouch>
 ```

@@ -11,7 +11,7 @@ const Nav = () => {
   ];
 
   return (
-    <nav className="border-r border-gray-200">
+    <nav className="border-r">
       <ul className="py-10 flex flex-col gap-1">
         {navItems.map((item) => (
           <NavItem key={item.href} href={item.href}>
