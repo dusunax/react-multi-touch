@@ -477,13 +477,8 @@ const useTouchable = (props: UseTouchableProps) => {
     const img = touchableRef.current?.querySelector("img") as HTMLImageElement;
     if (img) {
       img.onload = () => {
-        const imgDomRect = img.getBoundingClientRect();
-        const currentDomRect =
-          touchableRef.current?.getBoundingClientRect() || null;
-        if (
-          currentDomRect === null ||
-          (currentDomRect && currentDomRect.width < imgDomRect.width)
-        ) {
+      const imgDomRect = img.getBoundingClientRect();
+        if (domRect === null || (domRect && domRect.width < imgDomRect.width)) {
           setDomRect(imgDomRect);
           setInitialSize({
             width: imgDomRect.width,
