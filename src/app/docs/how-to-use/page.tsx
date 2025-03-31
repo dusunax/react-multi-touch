@@ -41,7 +41,10 @@ const Page = () => {
         <h2 className="text-xl font-bold">Usage</h2>
         <div className="flex items-center justify-between">
           Use the component in your component file.
-          <Link href="/components" className="text-xs text-right text-primary">
+          <Link
+            href="/docs/components"
+            className="text-xs text-right text-primary"
+          >
             ...detail
           </Link>
         </div>
@@ -51,11 +54,11 @@ const Page = () => {
       <div className="space-y-2">
         <h2 className="text-xl font-bold">Example</h2>
         <p>
-          <strong className="semi-bold">In touch device,</strong> you can drag, scale and rotate the
-          element below.
+          <strong className="semi-bold">In touch device,</strong> you can drag,
+          scale and rotate the element below.
         </p>
         <Link
-          href="/components"
+          href="/docs/gesture"
           className="block text-xs text-right text-primary"
         >
           ...gesture detail
