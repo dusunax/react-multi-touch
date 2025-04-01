@@ -2,9 +2,9 @@ import {
   type Touch,
   type TouchEvent,
   type TouchEventHandler,
+  type TouchList,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -108,15 +108,117 @@ const useTouchable = (props: UseTouchableProps) => {
     if (!("PointerEvent" in window && navigator.maxTouchPoints > 0)) {
       console.error(ERRORS["NOT_SUPPORTED"].message);
     }
-  }, []);
+  }, [minElementSize, maxElementSize]);
+
+  /**
+   * State Update
+   */
+  /** */
+  const updateIsTouching = useCallback((el: HTMLElement | null) => {
+    if (!el || el.id !== id) {
+      setIsTouching(false);
+      return;
+    }
+    setIsTouching(true);
+  }, [id]);
+
+  const updateElement = useCallback( ({
+    touchable,
+    width,
+    height,
+    left,
+    top,
+  }: {
+    touchable: HTMLElement;
+    width?: number;
+    height?: number;
+    left?: number;
+    top?: number;
+  }) => {
+    if (width && height) {
+      const newWidth = Math.max(
+        minElementSize,
+        Math.min(width, maxElementSize)
+      );
+      const newHeight = Math.max(
+        minElementSize,
+        Math.min(height, maxElementSize)
+      );
+      touchable.style.width = `${newWidth}px`;
+      touchable.style.height = `${newHeight}px`;
+
+      const touchableChild = Array.from(touchable.children) as HTMLElement[];
+      if (!touchableChild) return;
+      touchableChild
+        .filter((e) => !e.classList.contains("touchable__control"))
+        .forEach((child) => {
+          child.style.width = `${newWidth}px`;
+          child.style.height = `${newHeight}px`;
+        });
+    }
+
+    if (left && top) {
+      touchable.style.left = `${left}px`;
+      touchable.style.top = `${top}px`;
+    }
+  },[minElementSize, maxElementSize]);
+
+  const resetToInitialState = useCallback(() => {
+    const touchable = touchableRef.current;
+
+    if (touchableRef.current && touchable && initialSize) {
+      const { width, height } = initialSize;
+      const currentStyle = getStyle(touchable);
+      const deltaWidth = width - currentStyle.width;
+      const deltaHeight = height - currentStyle.height;
+      const newLeft = currentStyle.left - deltaWidth / 2;
+      const newTop = currentStyle.top - deltaHeight / 2;
+
+      touchable.style.transform = `rotate(0deg)`;
+      updateElement({
+        touchable,
+        width,
+        height,
+        left: newLeft,
+        top: newTop,
+      });
+    }
+    setActionModes(new Set(INTERACTION_MODES));
+    setIsInitialState(true);
+  }, [updateElement, initialSize]);
+
+  const updateTouchCount = useCallback(() => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+    }
+    touchCountRef.current += 1;
+    if (touchCountRef.current >= 3) {
+      resetToInitialState();
+    }
+
+    touchTimerRef.current = setTimeout(() => {
+      touchCountRef.current = 0;
+    }, 300);
+  }, [resetToInitialState]);
+
+  const toggleActionMode = (mode: (typeof INTERACTION_MODES)[number]) => {
+    setActionModes((prev) => {
+      const newModes = new Set(prev);
+      if (newModes.has(mode)) {
+        newModes.delete(mode);
+      } else {
+        newModes.add(mode);
+      }
+      return newModes;
+    });
+  };
 
   /**
    * Functionality
    */
   /** */
-  const drag = (event: TouchEvent, touchable: HTMLElement) => {
-    const cachedTouches = eventCacheRef.current?.touches;
-    if (!cachedTouches || !domRect) return;
+  const drag = useCallback((event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
+    if (!cachedTouches || cachedTouches.length < 1) return;
 
     try {
       const touch = Array.from(event.touches)[0];
@@ -135,12 +237,11 @@ const useTouchable = (props: UseTouchableProps) => {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
 
-  const rotate = (event: TouchEvent, touchable: HTMLElement) => {
-    const cachedTouches = eventCacheRef.current?.touches;
+  const rotate = useCallback((event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
     const touches = Array.from(event.touches);
-    if (!cachedTouches || cachedTouches.length < 2 || touches.length < 2)
+    if (cachedTouches.length < 2 || touches.length < 2)
       return;
 
     try {
@@ -186,84 +287,82 @@ const useTouchable = (props: UseTouchableProps) => {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
 
   /** scale element by side with 1 finger
    * - need `<Touchable.Handles>` component to be rendered
    * - can hide handles by setting `showCorner` to false
    */
-  const scaleOnSide = (
-    event: TouchEvent,
-    side: PinchZoomSide,
-    touchable: HTMLElement
-  ) => {
-    const cachedTouches = eventCacheRef.current?.touches;
-    if (!cachedTouches || side === "center") return;
+  const scaleOnSide = useCallback(
+    (event: TouchEvent, side: PinchZoomSide, touchable: HTMLElement, cachedTouches: TouchList) => {
+      if (cachedTouches.length < 1 || side === "center") return;
+      
+      try {
+        const touch = Array.from(event.touches)[0];
+        const prevTouch = cachedTouches[0];
+        const style = getStyle(touchable);
 
-    try {
-      const touch = Array.from(event.touches)[0];
-      const prevTouch = cachedTouches[0];
-      const style = getStyle(touchable);
+        const [diffX, diffY] = [
+          touch.clientX - prevTouch.clientX,
+          touch.clientY - prevTouch.clientY,
+        ];
 
-      const [diffX, diffY] = [
-        touch.clientX - prevTouch.clientX,
-        touch.clientY - prevTouch.clientY,
-      ];
+        let newWidth = style.width;
+        let newHeight = style.height;
+        let newLeft = style.left;
+        let newTop = style.top;
 
-      let newWidth = style.width;
-      let newHeight = style.height;
-      let newLeft = style.left;
-      let newTop = style.top;
+        const currentTop = touchable.dataset
+          .currentTop as keyof typeof SIDE_MAP;
+        const sideMap = SIDE_MAP[currentTop] ?? SIDE_MAP.top;
+        const sideIndex = Object.values(ROTATION_SIDES).indexOf(side);
+        const adjustedSideIndex = sideMap[sideIndex];
+        const adjustSide =
+          ROTATION_SIDES[adjustedSideIndex as keyof typeof ROTATION_SIDES];
+        const moveOrigin = MOVE_ORIGIN[adjustSide as keyof typeof MOVE_ORIGIN];
 
-      const currentTop = touchable.dataset.currentTop as keyof typeof SIDE_MAP;
-      const sideMap = SIDE_MAP[currentTop] ?? SIDE_MAP.top;
-      const sideIndex = Object.values(ROTATION_SIDES).indexOf(side);
-      const adjustedSideIndex = sideMap[sideIndex];
-      const adjustSide =
-        ROTATION_SIDES[adjustedSideIndex as keyof typeof ROTATION_SIDES];
-      const moveOrigin = MOVE_ORIGIN[adjustSide as keyof typeof MOVE_ORIGIN];
+        switch (side) {
+          case "top-left":
+            newWidth -= diffX;
+            newHeight -= diffY;
+            break;
+          case "top-right":
+            newWidth += diffX;
+            newHeight -= diffY;
+            break;
+          case "bottom-left":
+            newWidth -= diffX;
+            newHeight += diffY;
+            break;
+          case "bottom-right":
+            newWidth += diffX;
+            newHeight += diffY;
+            break;
+        }
 
-      switch (side) {
-        case "top-left":
-          newWidth -= diffX;
-          newHeight -= diffY;
-          break;
-        case "top-right":
-          newWidth += diffX;
-          newHeight -= diffY;
-          break;
-        case "bottom-left":
-          newWidth -= diffX;
-          newHeight += diffY;
-          break;
-        case "bottom-right":
-          newWidth += diffX;
-          newHeight += diffY;
-          break;
-      }
+        newLeft -= moveOrigin[0] * diffX;
+        newTop -= moveOrigin[1] * diffY;
 
-      newLeft -= moveOrigin[0] * diffX;
-      newTop -= moveOrigin[1] * diffY;
-
-      requestAnimationFrame(() => {
-        updateElement({
-          touchable,
-          width: newWidth,
-          height: newHeight,
-          left: newLeft,
-          top: newTop,
+        requestAnimationFrame(() => {
+          updateElement({
+            touchable,
+            width: newWidth,
+            height: newHeight,
+            left: newLeft,
+            top: newTop,
+          });
         });
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [updateElement]
+  );
 
-  /** scale element by center with 2 fingers */
-  const pinchZoom = (event: TouchEvent, touchable: HTMLElement) => {
-    const cachedTouches = eventCacheRef.current?.touches;
+  /** scale element by center when pinch zoom with 2 fingers */
+  const scale = useCallback( (event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
     const touches = Array.from(event.touches);
-    if (!cachedTouches || cachedTouches.length < 2 || touches.length < 2) {
+    if (cachedTouches.length < 2 || touches.length < 2) {
       return;
     }
 
@@ -295,7 +394,7 @@ const useTouchable = (props: UseTouchableProps) => {
       left: newLeft,
       top: newTop,
     });
-  };
+  }, [updateElement]);
 
   /**
    * Touch Event Handler
@@ -316,7 +415,7 @@ const useTouchable = (props: UseTouchableProps) => {
         setIsInitialState(false);
       }
     },
-    [actionModes, touchableRef.current, eventCacheRef.current]
+    [isInitialState, userSetEvents, updateTouchCount, updateIsTouching]
   );
 
   const onTouchMove = useCallback(
@@ -324,29 +423,32 @@ const useTouchable = (props: UseTouchableProps) => {
       userSetEvents?.onTouchMove?.(event as TouchEvent<HTMLDivElement>);
 
       const touchable = touchableRef.current;
-      if (!touchable) return;
+      const cachedTouches =
+        eventCacheRef.current?.touches ?? ([] as unknown as TouchList);
+      if (!touchable || !cachedTouches) return;
 
       if (event.touches.length === 1) {
         const side = (event.target as HTMLElement).getAttribute(
           "data-position"
         ) as PinchZoomSide;
+
         if (side && actionModes.has("scale")) {
-          scaleOnSide(event, side, touchable);
+          scaleOnSide(event, side, touchable, cachedTouches);
         } else if (actionModes.has("drag")) {
-          drag(event, touchable);
+          drag(event, touchable, cachedTouches);
         }
       }
       if (event.touches.length === 2) {
         if (actionModes.has("scale")) {
-          pinchZoom(event, touchable);
+          scale(event, touchable, cachedTouches);
         }
         if (actionModes.has("rotate")) {
-          rotate(event, touchable);
+          rotate(event, touchable, cachedTouches);
         }
       }
       eventCacheRef.current = event;
     },
-    [actionModes, touchableRef.current, eventCacheRef.current]
+    [actionModes, userSetEvents, drag, scale, rotate, scaleOnSide]
   );
 
   const onTouchEnd = useCallback(
@@ -355,87 +457,8 @@ const useTouchable = (props: UseTouchableProps) => {
 
       eventCacheRef.current = null;
     },
-    [actionModes, touchableRef.current, eventCacheRef.current]
+    [userSetEvents]
   );
-
-  /**
-   * State Update
-   */
-  /** */
-  const updateIsTouching = (el: HTMLElement | null) => {
-    if (!el || el.id !== id) {
-      setIsTouching(false);
-      return;
-    }
-    setIsTouching(true);
-  };
-
-  const updateTouchCount = () => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-    }
-    touchCountRef.current += 1;
-    if (touchCountRef.current >= 3) {
-      resetToInitialState();
-    }
-
-    touchTimerRef.current = setTimeout(() => {
-      touchCountRef.current = 0;
-    }, 300);
-  };
-
-  const updateElement = ({
-    touchable,
-    width,
-    height,
-    left,
-    top,
-  }: {
-    touchable: HTMLElement;
-    width?: number;
-    height?: number;
-    left?: number;
-    top?: number;
-  }) => {
-    if (width && height) {
-      const newWidth = Math.max(
-        minElementSize,
-        Math.min(width, maxElementSize)
-      );
-      const newHeight = Math.max(
-        minElementSize,
-        Math.min(height, maxElementSize)
-      );
-      touchable.style.width = `${newWidth}px`;
-      touchable.style.height = `${newHeight}px`;
-
-      const touchableChild = Array.from(touchable.children) as HTMLElement[];
-      if (!touchableChild) return;
-      touchableChild
-        .filter((e) => !e.classList.contains("touchable__control"))
-        .forEach((child) => {
-          child.style.width = `${newWidth}px`;
-          child.style.height = `${newHeight}px`;
-        });
-    }
-
-    if (left && top) {
-      touchable.style.left = `${left}px`;
-      touchable.style.top = `${top}px`;
-    }
-  };
-
-  const toggleActionMode = (mode: (typeof INTERACTION_MODES)[number]) => {
-    setActionModes((prev) => {
-      const newModes = new Set(prev);
-      if (newModes.has(mode)) {
-        newModes.delete(mode);
-      } else {
-        newModes.add(mode);
-      }
-      return newModes;
-    });
-  };
 
   /**
    * Utility
@@ -469,15 +492,17 @@ const useTouchable = (props: UseTouchableProps) => {
           height: domRect.height,
         });
       }
-    };
+    }
     updateDomRect();
+  }, []);
 
+  useEffect(() => {
     // if child is only element that has size,
     // update domRect to child size after image is loaded
     const img = touchableRef.current?.querySelector("img") as HTMLImageElement;
     if (img) {
       img.onload = () => {
-      const imgDomRect = img.getBoundingClientRect();
+        const imgDomRect = img.getBoundingClientRect();
         if (domRect === null || (domRect && domRect.width < imgDomRect.width)) {
           setDomRect(imgDomRect);
           setInitialSize({
@@ -487,7 +512,7 @@ const useTouchable = (props: UseTouchableProps) => {
         }
       };
     }
-  }, []);
+  },[domRect])
 
   // Update `isTouching` on Global Touch Start
   // - set `isTouching` to `false` when touchable is not touched
@@ -517,42 +542,13 @@ const useTouchable = (props: UseTouchableProps) => {
     };
   }, [id, handleMode]);
 
-  const resetToInitialState = () => {
-    const touchable = touchableRef.current;
-
-    if (touchableRef.current && touchable && initialSize) {
-      const { width, height } = initialSize;
-      const currentStyle = getStyle(touchable);
-      const deltaWidth = width - currentStyle.width;
-      const deltaHeight = height - currentStyle.height;
-      const newLeft = currentStyle.left - deltaWidth / 2;
-      const newTop = currentStyle.top - deltaHeight / 2;
-
-      touchable.style.transform = `rotate(0deg)`;
-      updateElement({
-        touchable,
-        width,
-        height,
-        left: newLeft,
-        top: newTop,
-      });
-    }
-    setActionModes(new Set(INTERACTION_MODES));
-    setIsInitialState(true);
-  };
-
-  const touchHandlers = useMemo(
-    () => ({
+  return {
+    contextValue,
+    touchHandlers: {
       onTouchStart,
       onTouchMove,
       onTouchEnd,
-    }),
-    [onTouchStart, onTouchMove, onTouchEnd]
-  );
-
-  return {
-    contextValue,
-    touchHandlers,
+    },
     isTouching,
     size: {
       width: domRect?.width,

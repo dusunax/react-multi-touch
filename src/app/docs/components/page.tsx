@@ -48,9 +48,9 @@ const Page = () => {
         <h2 className="text-xl font-bold">{"<MultiTouch.Handle>"}</h2>
         <p>
           Handle component is nassasary to perform 1 finger corner scaling.
-          Touch the corner handle element{" "}
-          <Code>.touchable__corner-handle"</Code> to perform scaling based on
-          certain corner. (<Code>ROTATION_SIDES</Code>)
+          Touch the corner handle element <Code>.touchable__corner-handle</Code>{" "}
+          to perform scaling based on certain corner. (
+          <Code>ROTATION_SIDES</Code>)
         </p>
         <p>
           If you wish to perform the corner scaling but hide the handle, use the

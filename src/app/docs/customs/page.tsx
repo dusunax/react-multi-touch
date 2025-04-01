@@ -57,11 +57,11 @@ const Page = () => {
                 is exist in the set. (active by default)
               </List.Item>
               <List.Item>
-                <Code>scale</Code>: Change element's size on 2 finger pinch
+                <Code>scale</Code>: Change element&apos;s size on 2 finger pinch
                 action. (active by default)
               </List.Item>
               <List.Item>
-                <Code>rotate</Code>: Change element's rotation on 2 finger
+                <Code>rotate</Code>: Change element&apos;s rotation on 2 finger
                 rotation. (active by default)
               </List.Item>
             </ul>
@@ -71,7 +71,7 @@ const Page = () => {
             <ul className="flex flex-col gap-3 mt-4 mb-3">
               <List.Item>
                 <Code>touching</Code>(default): When the element is active, show
-                it's corner handle element. In otherwise hide the UI.
+                it&apos;s corner handle element. In otherwise hide the UI.
               </List.Item>
               <List.Item>
                 <Code>always</Code>: Always show the corner handle element UI.
