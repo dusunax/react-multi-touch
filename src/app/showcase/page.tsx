@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useMemo } from "react";
 import { MultiTouch } from "react-multi-touch";
 import { motion } from "motion/react";
+import Touchable from "@/components/package/touchable/Touchable";
 
 const Page = () => {
   const itemLength = 24;
@@ -14,7 +15,15 @@ const Page = () => {
   }, []);
 
   return (
-    <section className="m-8 overflow-hidden">
+    <section className="p-8 h-full overflow-hidden">
+      <div className="fixed top-24 right-0 w-40 h-40 z-100">
+        <Touchable id="fish" handleMode="always">
+          <Image src="/sparkle.png" alt="sparkle" width={100} height={100} />
+          <Touchable.Handles />
+          <Touchable.ControlSetting />
+        </Touchable>
+      </div>
+
       <MultiTouch id="sun" className="z-100">
         <motion.div
           initial={{ top: "100px", opacity: 0 }}

@@ -107,6 +107,7 @@ const useTouchable = (props: UseTouchableProps) => {
     }
     if (!("PointerEvent" in window && navigator.maxTouchPoints > 0)) {
       console.error(ERRORS["NOT_SUPPORTED"].message);
+      touchableRef.current?.classList.add("unsupported");
     }
   }, [minElementSize, maxElementSize]);
 
@@ -114,54 +115,60 @@ const useTouchable = (props: UseTouchableProps) => {
    * State Update
    */
   /** */
-  const updateIsTouching = useCallback((el: HTMLElement | null) => {
-    if (!el || el.id !== id) {
-      setIsTouching(false);
-      return;
-    }
-    setIsTouching(true);
-  }, [id]);
+  const updateIsTouching = useCallback(
+    (el: HTMLElement | null) => {
+      if (!el || el.id !== id) {
+        setIsTouching(false);
+        return;
+      }
+      setIsTouching(true);
+    },
+    [id]
+  );
 
-  const updateElement = useCallback( ({
-    touchable,
-    width,
-    height,
-    left,
-    top,
-  }: {
-    touchable: HTMLElement;
-    width?: number;
-    height?: number;
-    left?: number;
-    top?: number;
-  }) => {
-    if (width && height) {
-      const newWidth = Math.max(
-        minElementSize,
-        Math.min(width, maxElementSize)
-      );
-      const newHeight = Math.max(
-        minElementSize,
-        Math.min(height, maxElementSize)
-      );
-      touchable.style.width = `${newWidth}px`;
-      touchable.style.height = `${newHeight}px`;
+  const updateElement = useCallback(
+    ({
+      touchable,
+      width,
+      height,
+      left,
+      top,
+    }: {
+      touchable: HTMLElement;
+      width?: number;
+      height?: number;
+      left?: number;
+      top?: number;
+    }) => {
+      if (width && height) {
+        const newWidth = Math.max(
+          minElementSize,
+          Math.min(width, maxElementSize)
+        );
+        const newHeight = Math.max(
+          minElementSize,
+          Math.min(height, maxElementSize)
+        );
+        touchable.style.width = `${newWidth}px`;
+        touchable.style.height = `${newHeight}px`;
 
-      const touchableChild = Array.from(touchable.children) as HTMLElement[];
-      if (!touchableChild) return;
-      touchableChild
-        .filter((e) => !e.classList.contains("touchable__control"))
-        .forEach((child) => {
-          child.style.width = `${newWidth}px`;
-          child.style.height = `${newHeight}px`;
-        });
-    }
+        const touchableChild = Array.from(touchable.children) as HTMLElement[];
+        if (!touchableChild) return;
+        touchableChild
+          .filter((e) => !e.classList.contains("touchable__control"))
+          .forEach((child) => {
+            child.style.width = `${newWidth}px`;
+            child.style.height = `${newHeight}px`;
+          });
+      }
 
-    if (left && top) {
-      touchable.style.left = `${left}px`;
-      touchable.style.top = `${top}px`;
-    }
-  },[minElementSize, maxElementSize]);
+      if (left && top) {
+        touchable.style.left = `${left}px`;
+        touchable.style.top = `${top}px`;
+      }
+    },
+    [minElementSize, maxElementSize]
+  );
 
   const resetToInitialState = useCallback(() => {
     const touchable = touchableRef.current;
@@ -217,86 +224,96 @@ const useTouchable = (props: UseTouchableProps) => {
    * Functionality
    */
   /** */
-  const drag = useCallback((event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
-    if (!cachedTouches || cachedTouches.length < 1) return;
+  const drag = useCallback(
+    (event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
+      if (!cachedTouches || cachedTouches.length < 1) return;
 
-    try {
-      const touch = Array.from(event.touches)[0];
-      const [left, top] = [
-        parseFloat(window.getComputedStyle(touchable).left),
-        parseFloat(window.getComputedStyle(touchable).top),
-      ];
-      const [diffX, diffY] = [
-        touch.clientX - cachedTouches[0].clientX,
-        touch.clientY - cachedTouches[0].clientY,
-      ];
-      const [newLeft, newTop] = [left + diffX, top + diffY];
+      try {
+        const touch = Array.from(event.touches)[0];
+        const [left, top] = [
+          parseFloat(window.getComputedStyle(touchable).left),
+          parseFloat(window.getComputedStyle(touchable).top),
+        ];
+        const [diffX, diffY] = [
+          touch.clientX - cachedTouches[0].clientX,
+          touch.clientY - cachedTouches[0].clientY,
+        ];
+        const [newLeft, newTop] = [left + diffX, top + diffY];
 
-      touchable.style.left = `${newLeft}px`;
-      touchable.style.top = `${newTop}px`;
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
-
-  const rotate = useCallback((event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
-    const touches = Array.from(event.touches);
-    if (cachedTouches.length < 2 || touches.length < 2)
-      return;
-
-    try {
-      const getAngle = (touch1: Touch, touch2: Touch) => {
-        return (
-          (Math.atan2(
-            touch2.clientY - touch1.clientY,
-            touch2.clientX - touch1.clientX
-          ) *
-            180) /
-          Math.PI
-        );
-      };
-
-      const currentAngle = getAngle(touches[0], touches[1]);
-      const previousAngle = getAngle(cachedTouches[0], cachedTouches[1]);
-
-      const rotation = currentAngle - previousAngle;
-      const currentRotation = getComputedStyle(touchable).transform;
-      let currentDegrees = 0;
-
-      if (currentRotation && currentRotation !== "none") {
-        const matrix = new DOMMatrix(currentRotation);
-        currentDegrees = (Math.atan2(matrix.b, matrix.a) * 180) / Math.PI;
+        touchable.style.left = `${newLeft}px`;
+        touchable.style.top = `${newTop}px`;
+      } catch (e) {
+        console.error(e);
       }
+    },
+    []
+  );
 
-      const newRotation = currentDegrees + rotation;
-      touchable.style.transform = `rotate(${newRotation}deg)`;
+  const rotate = useCallback(
+    (event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
+      const touches = Array.from(event.touches);
+      if (cachedTouches.length < 2 || touches.length < 2) return;
 
-      const normalizedRotation = ((newRotation % 360) + 360) % 360;
-      let currentTop;
-      if (normalizedRotation <= 45 || normalizedRotation > 315) {
-        currentTop = "top";
-      } else if (normalizedRotation <= 135) {
-        currentTop = "right";
-      } else if (normalizedRotation <= 225) {
-        currentTop = "bottom";
-      } else {
-        currentTop = "left";
+      try {
+        const getAngle = (touch1: Touch, touch2: Touch) => {
+          return (
+            (Math.atan2(
+              touch2.clientY - touch1.clientY,
+              touch2.clientX - touch1.clientX
+            ) *
+              180) /
+            Math.PI
+          );
+        };
+
+        const currentAngle = getAngle(touches[0], touches[1]);
+        const previousAngle = getAngle(cachedTouches[0], cachedTouches[1]);
+
+        const rotation = currentAngle - previousAngle;
+        const currentRotation = getComputedStyle(touchable).transform;
+        let currentDegrees = 0;
+
+        if (currentRotation && currentRotation !== "none") {
+          const matrix = new DOMMatrix(currentRotation);
+          currentDegrees = (Math.atan2(matrix.b, matrix.a) * 180) / Math.PI;
+        }
+
+        const newRotation = currentDegrees + rotation;
+        touchable.style.transform = `rotate(${newRotation}deg)`;
+
+        const normalizedRotation = ((newRotation % 360) + 360) % 360;
+        let currentTop;
+        if (normalizedRotation <= 45 || normalizedRotation > 315) {
+          currentTop = "top";
+        } else if (normalizedRotation <= 135) {
+          currentTop = "right";
+        } else if (normalizedRotation <= 225) {
+          currentTop = "bottom";
+        } else {
+          currentTop = "left";
+        }
+
+        touchable.dataset.currentTop = currentTop;
+      } catch (e) {
+        console.error(e);
       }
-
-      touchable.dataset.currentTop = currentTop;
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+    },
+    []
+  );
 
   /** scale element by side with 1 finger
    * - need `<Touchable.Handles>` component to be rendered
    * - can hide handles by setting `showCorner` to false
    */
   const scaleOnSide = useCallback(
-    (event: TouchEvent, side: PinchZoomSide, touchable: HTMLElement, cachedTouches: TouchList) => {
+    (
+      event: TouchEvent,
+      side: PinchZoomSide,
+      touchable: HTMLElement,
+      cachedTouches: TouchList
+    ) => {
       if (cachedTouches.length < 1 || side === "center") return;
-      
+
       try {
         const touch = Array.from(event.touches)[0];
         const prevTouch = cachedTouches[0];
@@ -360,41 +377,44 @@ const useTouchable = (props: UseTouchableProps) => {
   );
 
   /** scale element by center when pinch zoom with 2 fingers */
-  const scale = useCallback( (event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
-    const touches = Array.from(event.touches);
-    if (cachedTouches.length < 2 || touches.length < 2) {
-      return;
-    }
+  const scale = useCallback(
+    (event: TouchEvent, touchable: HTMLElement, cachedTouches: TouchList) => {
+      const touches = Array.from(event.touches);
+      if (cachedTouches.length < 2 || touches.length < 2) {
+        return;
+      }
 
-    const [touch1, touch2] = [touches[0], touches[1]];
-    const distance = Math.sqrt(
-      Math.pow(touch1.clientX - touch2.clientX, 2) +
-        Math.pow(touch1.clientY - touch2.clientY, 2)
-    );
+      const [touch1, touch2] = [touches[0], touches[1]];
+      const distance = Math.sqrt(
+        Math.pow(touch1.clientX - touch2.clientX, 2) +
+          Math.pow(touch1.clientY - touch2.clientY, 2)
+      );
 
-    const prevDistance = Math.sqrt(
-      Math.pow(cachedTouches[0].clientX - cachedTouches[1].clientX, 2) +
-        Math.pow(cachedTouches[0].clientY - cachedTouches[1].clientY, 2)
-    );
-    const diff = distance - prevDistance;
-    const scale = 1 + diff / 100;
+      const prevDistance = Math.sqrt(
+        Math.pow(cachedTouches[0].clientX - cachedTouches[1].clientX, 2) +
+          Math.pow(cachedTouches[0].clientY - cachedTouches[1].clientY, 2)
+      );
+      const diff = distance - prevDistance;
+      const scale = 1 + diff / 100;
 
-    const { width, height, left, top } = getStyle(touchable);
-    const widthScale = Math.floor(width * scale);
-    const heightScale = Math.floor(height * scale);
-    const deltaWidth = widthScale - width;
-    const deltaHeight = heightScale - height;
-    const newLeft = left - deltaWidth / 2;
-    const newTop = top - deltaHeight / 2;
+      const { width, height, left, top } = getStyle(touchable);
+      const widthScale = Math.floor(width * scale);
+      const heightScale = Math.floor(height * scale);
+      const deltaWidth = widthScale - width;
+      const deltaHeight = heightScale - height;
+      const newLeft = left - deltaWidth / 2;
+      const newTop = top - deltaHeight / 2;
 
-    updateElement({
-      touchable,
-      width: widthScale,
-      height: heightScale,
-      left: newLeft,
-      top: newTop,
-    });
-  }, [updateElement]);
+      updateElement({
+        touchable,
+        width: widthScale,
+        height: heightScale,
+        left: newLeft,
+        top: newTop,
+      });
+    },
+    [updateElement]
+  );
 
   /**
    * Touch Event Handler
@@ -492,7 +512,7 @@ const useTouchable = (props: UseTouchableProps) => {
           height: domRect.height,
         });
       }
-    }
+    };
     updateDomRect();
   }, []);
 
@@ -512,7 +532,7 @@ const useTouchable = (props: UseTouchableProps) => {
         }
       };
     }
-  },[domRect])
+  }, [domRect]);
 
   // Update `isTouching` on Global Touch Start
   // - set `isTouching` to `false` when touchable is not touched
