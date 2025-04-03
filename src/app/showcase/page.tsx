@@ -14,7 +14,7 @@ const Page = () => {
   }, []);
 
   return (
-    <section className="m-8">
+    <section className="m-8 overflow-hidden">
       <MultiTouch id="sun" className="z-100">
         <motion.div
           initial={{ top: "100px", opacity: 0 }}

@@ -1,5 +1,6 @@
 import Code from "@/components/ui/Code";
 import CodeBlock from "@/components/ui/CodeBlock";
+import SectionWrapper from "@/components/ui/SectionWrapper";
 
 const basic = `<MultiTouch>
   id="your-element-id"
@@ -26,7 +27,7 @@ const controlSetting = `<MultiTouch>
 
 const Page = () => {
   return (
-    <section className="m-8 space-y-10 flex flex-col">
+    <SectionWrapper>
       <h1 className="text-2xl font-bold">Components</h1>
 
       <div className="space-y-2">
@@ -76,7 +77,7 @@ const Page = () => {
         </p>
         <CodeBlock language="tsx" text={controlSetting} />
       </div>
-    </section>
+    </SectionWrapper>
   );
 };
 

@@ -1,9 +1,10 @@
 import Code from "@/components/ui/Code";
 import List from "@/components/ui/List";
+import SectionWrapper from "@/components/ui/SectionWrapper";
 
 const Page = () => {
   return (
-    <section className="m-8 space-y-10 flex flex-col">
+    <SectionWrapper>
       <h1 className="text-2xl font-bold">Customs</h1>
 
       <div className="space-y-2">
@@ -85,7 +86,7 @@ const Page = () => {
           </List.Item>
         </List>
       </div>
-    </section>
+    </SectionWrapper>
   );
 };
 

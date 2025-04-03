@@ -1,6 +1,7 @@
 import CodeBlock from "@/components/ui/CodeBlock";
 import Link from "next/link";
 import UsageExample from "./_components/UsageExample";
+import SectionWrapper from "@/components/ui/SectionWrapper";
 
 const code = `npm install react-multi-touch`;
 const importCode = `import { MultiTouch } from "react-multi-touch";`;
@@ -22,7 +23,7 @@ const usageCode = `<MultiTouch>
 
 const Page = () => {
   return (
-    <section className="m-8 space-y-10 flex flex-col">
+    <SectionWrapper>
       <h1 className="text-2xl font-bold">Getting started</h1>
 
       <div className="space-y-2">
@@ -65,7 +66,7 @@ const Page = () => {
         </Link>
         <UsageExample />
       </div>
-    </section>
+    </SectionWrapper>
   );
 };
 

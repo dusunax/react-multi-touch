@@ -2,7 +2,7 @@ import Nav from "@/components/Nav";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="h-full grid grid-cols-[160px_1fr]">
+    <div className="h-full grid md:grid-cols-[160px_1fr]">
       <Nav />
       {children}
     </div>

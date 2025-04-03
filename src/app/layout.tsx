@@ -29,11 +29,9 @@ const RootLayout = async ({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <main className="w-screen h-screen grid grid-cols-1 grid-rows-[60px_1fr] items-center justify-center overflow-hidden">
+        <main className="w-screen h-screen grid grid-cols-1 grid-rows-[60px_1fr] items-center justify-center">
           <Header />
-          <ContentsWrapper>
-            {children}
-          </ContentsWrapper>
+          <ContentsWrapper>{children}</ContentsWrapper>
         </main>
       </body>
     </html>

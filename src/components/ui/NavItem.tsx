@@ -1,17 +1,16 @@
 import Link from "next/link";
 
-const NavItem = ({
-  href,
-  children,
-  active,
-}: {
-  href: string;
+interface NavItemProps extends React.ComponentProps<typeof Link> {
+  active?: boolean;
   children: React.ReactNode;
-  active: boolean;
-}) => {
+}
+
+const NavItem = ({ href, children, active, ...props }: NavItemProps) => {
   return (
     <li className={active ? "text-blue-500" : ""}>
-      <Link href={href}>{children}</Link>
+      <Link href={href} {...props}>
+        {children}
+      </Link>
     </li>
   );
 };
