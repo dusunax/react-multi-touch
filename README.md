@@ -1,15 +1,19 @@
 # React Multi Touch
 
 > [!NOTE]
-> - This package need to be used in touch devices.
+> - This package need to be used in touch devices. 
 
 ## Overview
 
+![image](https://github.com/user-attachments/assets/7514e307-dc73-407c-8f11-b9bb1d89122b)
+
 React Multi Touch is a easy-to-use React-based npm package that enables multi-touch support for web applications in touch devices. 
 
-It's version 1. Still in development, many room for improvement😉
+It's version 1.0.x. Still in development, many room for improvement😉
 
-## Installation
+## Installation 
+
+[![npm version](https://img.shields.io/npm/v/react-multi-touch.svg?style=square)](https://www.npmjs.org/package/react-multi-touch)
 
 ```bash
 npm install react-multi-touch
