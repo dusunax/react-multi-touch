@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "ko-KR"
-early_access: true
+early_access: false
 reviews:
   profile: "chill"
   request_changes_workflow: false
