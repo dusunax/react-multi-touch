@@ -24,6 +24,7 @@ const Touchable = (props: TouchableProps) => {
     touchHandlers,
     contextValue,
     isTouching,
+    isSupported,
     toggleActionMode,
     actionModes,
     resetToInitialState,
@@ -43,7 +44,9 @@ const Touchable = (props: TouchableProps) => {
         className={`absolute touchable__container ${className} ${
           !size.width || !size.height ? "invisible" : ""
         } ${isTouching ? "touching" : ""}
-        ${isTouching && handleMode === "touching" ? "z-100" : ""}`}
+        ${isTouching && handleMode === "touching" ? "z-100" : ""} ${
+          !isSupported ? "unsupported" : ""
+        }`}
         id={id}
         ref={touchableRef}
         data-current-top="top"

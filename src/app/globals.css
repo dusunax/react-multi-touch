@@ -8,6 +8,7 @@
   --border-color: #4e4e4e;
   --primary-color: #2b67ff;
   --separator-color: #dddddd;
+  --unsupported-color: #ff5151;
 }
 
 @theme {
@@ -73,4 +74,29 @@ button {
 
 button:active {
   transform: scale(0.9);
+}
+
+.unsupported:after {
+  content: "Touch event is not supported";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  bottom: -5px;
+  right: -5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  font-size: 0.5em;
+  text-align: center;
+  line-height: 1;
+  color: var(--unsupported-color);
+  border: 1px dotted var(--unsupported-color);
+}
+
+.unsupported * {
+  pointer-events: none;
+  opacity: 0.5;
+  filter: grayscale(1);
+  cursor: not-allowed;
 }
