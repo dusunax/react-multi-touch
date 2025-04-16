@@ -2504,10 +2504,10 @@ react-is@^16.13.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
-react-multi-touch@^1.0.28:
-  version "1.0.28"
-  resolved "https://registry.yarnpkg.com/react-multi-touch/-/react-multi-touch-1.0.28.tgz#7f0d44fe78cf3e934a854402d7c40b8e065cfe97"
-  integrity sha512-/FMClKBUf5iUWA+qD/x30SrJgN7ldEfnzLxBIMuREXL+TCiVdkN4Vfveh2M0RuK2h9KM9J+GJe1qy29xNctE3w==
+react-multi-touch@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/react-multi-touch/-/react-multi-touch-1.0.3.tgz#2b79946bdfc1f6a4670798f7216b81d99caa1196"
+  integrity sha512-VAL1jsp3iChJ33upBV4tgfi7cuUvrOMDJONZXs0k/Rou7QXHZYcW1zSY9k9WRQKHWNK7ONdFJCUQYLAt59xpqA==
 
 react-syntax-highlighter@^15.5.0:
   version "15.6.1"
