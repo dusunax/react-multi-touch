@@ -5,6 +5,7 @@ import {
   type TouchList,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -83,6 +84,7 @@ const useTouchable = (props: UseTouchableProps) => {
   const [actionModes, setActionModes] =
     useState<Set<(typeof INTERACTION_MODES)[number]>>(initialActionModes);
   const [isInitialState, setIsInitialState] = useState(true);
+  const [isSupported, setIsSupported] = useState(true);
 
   const [isTouching, setIsTouching] = useState(
     handleMode === "always" ? true : false
@@ -105,16 +107,14 @@ const useTouchable = (props: UseTouchableProps) => {
     if (minElementSize > maxElementSize) {
       throw new Error(ERRORS["INVAILD_SCALE_LIMIT"].message);
     }
+  }, [minElementSize, maxElementSize]);
+
+  useLayoutEffect(() => {
     if (!("PointerEvent" in window && navigator.maxTouchPoints > 0)) {
       console.error(ERRORS["NOT_SUPPORTED"].message);
-      touchableRef.current?.classList.add("unsupported");
+      setIsSupported(false);
     }
-  }, [
-    minElementSize,
-    maxElementSize,
-    touchableRef.current,
-    navigator.maxTouchPoints,
-  ]);
+  }, []);
 
   /**
    * State Update
@@ -575,6 +575,7 @@ const useTouchable = (props: UseTouchableProps) => {
       onTouchEnd,
     },
     isTouching,
+    isSupported,
     size: {
       width: domRect?.width,
       height: domRect?.height,
