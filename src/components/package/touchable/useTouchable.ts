@@ -109,7 +109,12 @@ const useTouchable = (props: UseTouchableProps) => {
       console.error(ERRORS["NOT_SUPPORTED"].message);
       touchableRef.current?.classList.add("unsupported");
     }
-  }, [minElementSize, maxElementSize]);
+  }, [
+    minElementSize,
+    maxElementSize,
+    touchableRef.current,
+    navigator.maxTouchPoints,
+  ]);
 
   /**
    * State Update
