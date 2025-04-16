@@ -77,7 +77,7 @@ const Handles = ({ className = "" }: { className?: string }) => {
         />
       ))}
       <div
-        className={`absolute w-[calc(100%-8px)] h-[calc(100%-8px)] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 box-content border border-dotted ${"border-gray-600"} -z-1`}
+        className={`absolute w-[calc(100%-8px)] h-[calc(100%-8px)] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 box-content border border-dotted border-gray-600 -z-1`}
       ></div>
     </div>
   );
@@ -106,9 +106,7 @@ const CornerHandle = ({ sideId }: { sideId: keyof typeof ROTATION_SIDES }) => {
           className={`pointer-events-none ${cornerStyle}`}
         />
       ) : (
-        <div
-          className={`bg-white border rounded-xs border-gray-600 w-2 h-2 pointer-events-none`}
-        />
+        <div className="bg-white border rounded-xs border-gray-600 w-2 h-2 pointer-events-none" />
       )}
     </div>
   );
