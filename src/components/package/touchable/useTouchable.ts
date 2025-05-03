@@ -63,10 +63,9 @@ const useTouchable = (props: UseTouchableProps) => {
     useState<Set<(typeof INTERACTION_MODES)[number]>>(initialActionModes);
   const [isInitialState, setIsInitialState] = useState(true);
   const [isSupported, setIsSupported] = useState(true);
+  const initialIsTouching = handleMode === "always" ? true : false;
+  const [isTouching, setIsTouching] = useState(initialIsTouching);
 
-  const [isTouching, setIsTouching] = useState(
-    handleMode === "always" ? true : false
-  );
   const {
     minElementSize = 20,
     maxElementSize = Infinity,
@@ -96,17 +95,6 @@ const useTouchable = (props: UseTouchableProps) => {
    * State Update
    */
   /** */
-  const updateIsTouching = useCallback(
-    (el: HTMLElement | null) => {
-      if (!el || el.id !== id) {
-        setIsTouching(false);
-        return;
-      }
-      setIsTouching(true);
-    },
-    [id]
-  );
-
   const updateElement = useCallback(
     ({
       touchable,
@@ -408,14 +396,14 @@ const useTouchable = (props: UseTouchableProps) => {
       if (!touchable) return;
 
       updateTouchCount();
-      updateIsTouching(touchable);
+      setIsTouching(true);
 
       eventCacheRef.current = event;
       if (isInitialState) {
         setIsInitialState(false);
       }
     },
-    [isInitialState, userSetEvents, updateTouchCount, updateIsTouching]
+    [isInitialState, userSetEvents, updateTouchCount]
   );
 
   const onTouchMove = useCallback(
@@ -495,8 +483,7 @@ const useTouchable = (props: UseTouchableProps) => {
     }
   }, [domRect]);
 
-  // Update `isTouching` on Global Touch Start
-  // - set `isTouching` to `false` when touchable is not touched
+  // Update `isTouching` when touchstart on outside of Touchable
   // - `isTouching` is used for showing `Handles` component
   useEffect(() => {
     const handleGlobalTouch = (event: TouchEvent) => {
