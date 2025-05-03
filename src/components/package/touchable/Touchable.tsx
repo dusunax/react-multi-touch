@@ -19,7 +19,6 @@ const TouchableContext = createContext<TouchableContext | undefined>(undefined);
 const Touchable = (props: TouchableProps) => {
   const { id, children, className = "", handleMode } = props;
   const {
-    size,
     touchableRef,
     touchHandlers,
     contextValue,
@@ -41,9 +40,9 @@ const Touchable = (props: TouchableProps) => {
       }}
     >
       <div
-        className={`absolute touchable__container ${className} ${
-          !size.width || !size.height ? "invisible" : ""
-        } ${isTouching ? "touching" : ""}
+        className={`absolute touchable__container ${className}  ${
+          isTouching ? "touching" : ""
+        }
         ${isTouching && handleMode === "touching" ? "z-100" : ""} ${
           !isSupported ? "unsupported" : ""
         }`}
@@ -54,7 +53,6 @@ const Touchable = (props: TouchableProps) => {
       >
         {children}
       </div>
-      <div style={{ ...size }} className="touchable__relative-size" />
     </TouchableContext.Provider>
   );
 };

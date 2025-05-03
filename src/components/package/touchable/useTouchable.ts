@@ -59,10 +59,6 @@ const useTouchable = (props: UseTouchableProps) => {
   const touchCountRef = useRef<number>(0);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [domRect, setDomRect] = useState<DOMRect | null>(null);
-  const [initialSize, setInitialSize] = useState<Pick<
-    DOMRect,
-    "width" | "height"
-  > | null>(null);
   const [actionModes, setActionModes] =
     useState<Set<(typeof INTERACTION_MODES)[number]>>(initialActionModes);
   const [isInitialState, setIsInitialState] = useState(true);
@@ -85,11 +81,9 @@ const useTouchable = (props: UseTouchableProps) => {
   /**
    * Validation
    */
-  useEffect(() => {
-    if (minElementSize > maxElementSize) {
-      throw new Error(ERRORS["INVAILD_SCALE_LIMIT"].message);
-    }
-  }, [minElementSize, maxElementSize]);
+  if (minElementSize > maxElementSize) {
+    throw new Error(ERRORS["INVAILD_SCALE_LIMIT"].message);
+  }
 
   useLayoutEffect(() => {
     if (!("PointerEvent" in window && navigator.maxTouchPoints > 0)) {
@@ -160,26 +154,25 @@ const useTouchable = (props: UseTouchableProps) => {
   const resetToInitialState = useCallback(() => {
     const touchable = touchableRef.current;
 
-    if (touchableRef.current && touchable && initialSize) {
-      const { width, height } = initialSize;
+    if (touchableRef.current && touchable && domRect) {
       const currentStyle = getStyle(touchable);
-      const deltaWidth = width - currentStyle.width;
-      const deltaHeight = height - currentStyle.height;
+      const deltaWidth = domRect.width - currentStyle.width;
+      const deltaHeight = domRect.height - currentStyle.height;
       const newLeft = currentStyle.left - deltaWidth / 2;
       const newTop = currentStyle.top - deltaHeight / 2;
 
       touchable.style.transform = `rotate(0deg)`;
       updateElement({
         touchable,
-        width,
-        height,
+        width: domRect.width,
+        height: domRect.height,
         left: newLeft,
         top: newTop,
       });
     }
     setActionModes(new Set(INTERACTION_MODES));
     setIsInitialState(true);
-  }, [updateElement, initialSize]);
+  }, [updateElement, domRect]);
 
   const updateTouchCount = useCallback(() => {
     if (touchTimerRef.current) {
@@ -488,21 +481,6 @@ const useTouchable = (props: UseTouchableProps) => {
    * Side Effects
    */
   /** */
-  // Update Relative Element Size
-  useEffect(() => {
-    const updateDomRect = () => {
-      if (touchableRef.current) {
-        const domRect = touchableRef.current.getBoundingClientRect();
-        setDomRect(domRect);
-        setInitialSize({
-          width: domRect.width,
-          height: domRect.height,
-        });
-      }
-    };
-    updateDomRect();
-  }, []);
-
   useEffect(() => {
     // if child is only element that has size,
     // update domRect to child size after image is loaded
@@ -512,10 +490,6 @@ const useTouchable = (props: UseTouchableProps) => {
         const imgDomRect = img.getBoundingClientRect();
         if (domRect === null || (domRect && domRect.width < imgDomRect.width)) {
           setDomRect(imgDomRect);
-          setInitialSize({
-            width: imgDomRect.width,
-            height: imgDomRect.height,
-          });
         }
       };
     }
@@ -558,10 +532,6 @@ const useTouchable = (props: UseTouchableProps) => {
     },
     isTouching,
     isSupported,
-    size: {
-      width: domRect?.width,
-      height: domRect?.height,
-    },
     touchableRef,
     actionModes,
     toggleActionMode,
