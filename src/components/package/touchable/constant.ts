@@ -37,3 +37,17 @@ export const ROTATION_SIDE_MAP = {
   bottom: [3, 2, 1, 0],
   right: [1, 3, 0, 2],
 } as const;
+
+export const MOVE_ORIGIN = {
+  "top-left": [-1, -1],
+  "top-right": [0, -1],
+  "bottom-left": [-1, 0],
+  "bottom-right": [0, 0],
+} as const;
+
+export const SIDE_MAP = {
+  top: [0, 1, 2, 3],
+  left: [2, 0, 3, 1],
+  bottom: [3, 2, 1, 0],
+  right: [1, 3, 0, 2],
+} as const;

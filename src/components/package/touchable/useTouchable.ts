@@ -13,6 +13,9 @@ import {
   INTERACTION_MODES,
   DEFAULT_HANDLE_VISIBILITY,
   HANDLE_VISIBILITY_MODES,
+  MOVE_ORIGIN,
+  ROTATION_SIDES,
+  SIDE_MAP,
   type RotationSide,
 } from "@constants/constant";
 import { ERRORS } from "@constants/errors";
@@ -43,27 +46,6 @@ const defaultValues: ContextValue = {
   cornerImageSrc: "",
   cornerStyle: "",
 };
-
-const MOVE_ORIGIN = {
-  "top-left": [-1, -1],
-  "top-right": [0, -1],
-  "bottom-left": [-1, 0],
-  "bottom-right": [0, 0],
-} as const;
-
-const ROTATION_SIDES = {
-  0: "top-left",
-  1: "top-right",
-  2: "bottom-left",
-  3: "bottom-right",
-} as const;
-
-const SIDE_MAP = {
-  top: [0, 1, 2, 3],
-  left: [2, 0, 3, 1],
-  bottom: [3, 2, 1, 0],
-  right: [1, 3, 0, 2],
-} as const;
 
 const useTouchable = (props: UseTouchableProps) => {
   const {
